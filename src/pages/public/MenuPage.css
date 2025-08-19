@@ -1,0 +1,247 @@
+/* MenuPage.css - Enhanced styling for the menu page */
+
+.menu-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.menu-hero-section {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-bottom: 2px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.menu-loading-container {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-stats .badge {
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.menu-tabs .nav-link {
+  font-weight: 500;
+  color: #6c757d;
+  border: none;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  padding: 1rem 1.5rem;
+}
+
+.menu-tabs .nav-link:hover {
+  color: #495057;
+  border-bottom-color: #dee2e6;
+  background-color: #f8f9fa;
+}
+
+.menu-tabs .nav-link.active {
+  color: #0d6efd;
+  border-bottom-color: #0d6efd;
+  background-color: white;
+  font-weight: 600;
+}
+
+.category-content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.category-header {
+  margin-bottom: 2rem;
+}
+
+.food-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  position: relative;
+}
+
+.food-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.food-image-container {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.food-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.food-card:hover .food-image {
+  transform: scale(1.05);
+}
+
+.food-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.food-image-placeholder i {
+  color: #adb5bd;
+}
+
+.food-price-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}
+
+.price-badge {
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.food-header {
+  border-bottom: 1px solid #f8f9fa;
+  padding-bottom: 0.5rem;
+}
+
+.food-title {
+  color: #212529;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.food-description {
+  line-height: 1.5;
+  min-height: 3rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.food-actions {
+  border-top: 1px solid #f8f9fa;
+}
+
+.add-to-cart-btn {
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.85rem;
+}
+
+.add-to-cart-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .menu-hero-section .display-4 {
+    font-size: 2rem;
+  }
+  
+  .menu-tabs .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .food-image-container {
+    aspect-ratio: 4 / 3;
+  }
+  
+  .menu-stats {
+    text-align: center !important;
+    margin-top: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .food-image-container {
+    height: 160px;
+  }
+  
+  .menu-hero-section {
+    padding: 2rem 0 !important;
+  }
+  
+  .category-header {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Alert animations */
+.alert.fade.show {
+  animation: slideInDown 0.3s ease;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translate3d(0, -100%, 0);
+    visibility: visible;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Bootstrap Icons spacing */
+.bi {
+  display: inline-block;
+  vertical-align: -.125em;
+}
+
+/* Custom badge styles */
+.badge.bg-light {
+  color: #6c757d !important;
+  border: 1px solid #dee2e6;
+}
+
+/* Tab content animation */
+.tab-content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Loading spinner custom styles */
+.menu-loading-container .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+}
+
+/* Enhanced card shadows */
+.food-card.shadow-sm {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+}
+
+/* Price formatting */
+.price-badge {
+  background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%) !important;
+  border: none;
+}
+
+/* Category statistics */
+.menu-stats .badge {
+  margin: 0.25rem;
+}

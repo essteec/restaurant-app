@@ -1,0 +1,256 @@
+/* Order Tracking Page Styles */
+.order-tracking-page {
+    min-height: 100vh;
+}
+
+.tracking-hero-section {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.order-status-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.15s ease-in-out;
+}
+
+.order-status-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.order-progress {
+    position: relative;
+}
+
+.progress-steps {
+    margin-top: 1rem;
+    padding: 0 0.5rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+}
+
+.step i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.item-row {
+    transition: all 0.15s ease-in-out;
+}
+
+.item-row:hover {
+    background-color: #e9ecef !important;
+}
+
+.call-requests-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    height: fit-content;
+}
+
+.quick-request-buttons .btn {
+    text-align: left;
+    transition: all 0.15s ease-in-out;
+}
+
+.quick-request-buttons .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.request-card {
+    border: 1px solid #e9ecef;
+    transition: all 0.15s ease-in-out;
+}
+
+.request-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 123, 255, 0.075);
+}
+
+.quick-actions-card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.quick-actions-card .btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.quick-actions-card .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive Progress Steps */
+@media (max-width: 576px) {
+    .progress-steps {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .step {
+        flex-direction: row;
+        justify-content: flex-start;
+        text-align: left;
+    }
+    
+    .step i {
+        margin-right: 0.5rem;
+        margin-bottom: 0;
+        font-size: 1.25rem;
+    }
+}
+
+/* Animation for refresh button */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Status badge enhancements */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.025em;
+}
+
+/* Card hover effects */
+.order-status-card,
+.call-requests-card,
+.quick-actions-card {
+    transition: all 0.15s ease-in-out;
+}
+
+.order-status-card:hover,
+.call-requests-card:hover,
+.quick-actions-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Progress bar customization */
+.progress {
+    height: 0.75rem;
+    background-color: #e9ecef;
+    border-radius: 0.375rem;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* Empty state styling */
+.text-center.text-muted i {
+    opacity: 0.5;
+}
+
+/* Modal enhancements */
+.modal-content {
+    border: none;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+}
+
+/* Button hover effects */
+.btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Loading spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.1em;
+}
+
+/* Alert customization */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+/* Card body padding adjustments */
+.request-card .card-body {
+    border-radius: 0.375rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .order-tracking-page .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .call-requests-card {
+        margin-top: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .tracking-hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .tracking-hero-section .lead {
+        font-size: 1rem;
+    }
+    
+    .order-info .row {
+        flex-direction: column;
+    }
+    
+    .quick-request-buttons .d-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+}
+
+/* Custom scrollbar for request list */
+.requests-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.requests-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.requests-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.requests-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.requests-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
