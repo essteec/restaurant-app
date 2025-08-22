@@ -20,6 +20,7 @@ const AdminFoodItemsPage = () => {
     const [imageFile, setImageFile] = useState(null);
     const [categoriesForItem, setCategoriesForItem] = useState([]);
     const [loadingDetails, setLoadingDetails] = useState(false);
+    const [loadingAiDescription, setLoadingAiDescription] = useState(false);
     // Pagination state
     const [pagination, setPagination] = useState({
         page: 0,
@@ -111,6 +112,33 @@ const AdminFoodItemsPage = () => {
         } catch (err) {
             console.error('Fetch categories error:', err);
             setCategoriesForItem([]);
+        }
+    };
+
+    // Generate AI description for food item
+    const generateAiDescription = async () => {
+        if (!currentItem?.foodName || currentItem.foodName.trim().length < 5) {
+            showError('Food name must be at least 5 characters long to generate AI description');
+            return;
+        }
+
+        try {
+            setLoadingAiDescription(true);
+            const response = await apiClient.get(`/ai/description?foodName=${encodeURIComponent(currentItem.foodName.trim())}`);
+            const aiDescription = response.data;
+            
+            if (aiDescription && typeof aiDescription === 'string') {
+                setCurrentItem({ ...currentItem, description: aiDescription });
+                showSuccess('AI description generated successfully!');
+            } else {
+                showWarning('AI description was generated but appears to be empty');
+            }
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || 'Failed to generate AI description';
+            showError(errorMessage);
+            console.error('AI description generation error:', err);
+        } finally {
+            setLoadingAiDescription(false);
         }
     };
 
@@ -470,7 +498,28 @@ const AdminFoodItemsPage = () => {
                                     )}
                                 </Form.Group>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Description</Form.Label>
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <Form.Label className="mb-0">Description</Form.Label>
+                                        <Button
+                                            variant="outline-primary"
+                                            size="sm"
+                                            onClick={generateAiDescription}
+                                            disabled={loadingAiDescription || !currentItem?.foodName || currentItem.foodName.trim().length < 5}
+                                            className="d-flex align-items-center gap-1"
+                                        >
+                                            {loadingAiDescription ? (
+                                                <>
+                                                    <Spinner animation="border" size="sm" />
+                                                    <span>Generating...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-magic"></i>
+                                                    <span>Generate with AI</span>
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
                                     <Form.Control
                                         as="textarea"
                                         rows={3}
