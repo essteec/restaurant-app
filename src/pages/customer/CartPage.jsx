@@ -10,12 +10,12 @@ import {
     Modal,
     Form,
     OverlayTrigger,
-    Tooltip
+    Tooltip,
+    Image
 } from 'react-bootstrap';
 import { useCart } from '../../contexts/use-cart.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.js';
-import { ImageWithFallback } from '../../components';
 import { formatCurrency, getImageUrl } from '../../utils/helpers.js';
 import routes from '../../routes/routes.js';
 import './CartPage.css';
@@ -90,12 +90,22 @@ const CartPage = () => {
             <Card.Body>
                 <Row className="align-items-center">
                     <Col md={2}>
-                        <ImageWithFallback
-                            src={getImageUrl(item.image)}
-                            alt={item.foodName}
-                            className="cart-item-image"
-                            style={{ width: '60px', height: '60px', objectFit: 'cover' }}
-                        />
+                        {item.image ? (
+                            <Image
+                                src={getImageUrl(item.image)}
+                                alt={item.foodName}
+                                thumbnail
+                                className="cart-item-image"
+                                style={{ objectFit: 'cover' }}
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'block';
+                                }}
+                            />
+                        ) : null}
+                        <Badge bg="secondary" style={{ display: item.image ? 'none' : 'block' }}>
+                            No Image
+                        </Badge>
                     </Col>
                     <Col md={4}>
                         <div className="item-details">

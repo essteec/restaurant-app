@@ -21,7 +21,19 @@ const ImageWithFallback = ({
     setIsLoading(false);
   };
 
-  const imageUrl = hasError ? fallback : getImageUrl(src, fallback);
+  // If src is an absolute URL (http(s) or data:), don't re-prefix it.
+  const isAbsolute = (s) => typeof s === 'string' && (/^data:|^https?:\/\//i.test(s));
+  
+  // If src starts with /images/ or /qr-codes/, treat it as a relative path from server root
+  const isServerRelative = (s) => typeof s === 'string' && (/^\/images\/|^\/qr-codes\//.test(s));
+
+  const imageUrl = hasError
+    ? fallback
+    : isAbsolute(src)
+      ? src  // Use absolute URLs as-is
+      : isServerRelative(src)
+        ? src  // Use server-relative paths as-is (e.g., /images/foo.jpg)
+        : getImageUrl(src, fallback);  // Build URL from raw filename
 
   return (
     <div className={`position-relative ${className}`} style={style}>

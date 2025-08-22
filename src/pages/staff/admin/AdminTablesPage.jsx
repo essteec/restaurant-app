@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Button, Spinner, Alert, Modal, Form, Badge } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../../../api';
 import useAuth from '../../../contexts/use-auth';
 import { DataTable } from '../../../components';
@@ -17,6 +18,7 @@ const AdminTablesPage = () => {
     const { user, isAuthenticated } = useAuth();
     const { showSuccess, showError, showWarning } = useToast();
     const { confirm } = useConfirmation();
+    const navigate = useNavigate();
 
     // Table status options
     const TABLE_STATUSES = [
@@ -70,6 +72,10 @@ const AdminTablesPage = () => {
         });
         setIsEditing(false);
         setShowTableModal(true);
+    };
+
+    const handleGetQrCodesClick = () => {
+        navigate('/admin/tables/qr-codes');
     };
 
     const handleEditTableClick = (table) => {
@@ -277,6 +283,10 @@ const AdminTablesPage = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1>Table Management</h1>
                 <div className="d-flex gap-2">
+                    <Button variant="secondary" onClick={handleGetQrCodesClick}>
+                        <i className="bi bi-qr-code-scan me-2"></i>
+                        Get QR Codes                       
+                    </Button>
                     <Button variant="primary" onClick={handleAddTableClick}>
                         <i className="bi bi-plus-circle me-2"></i>
                         Add New Table

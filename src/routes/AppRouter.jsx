@@ -13,6 +13,7 @@ import AdminDashboardPage from "@pages/staff/admin/AdminDashboardPage.jsx";
 import AdminMenuPage from "../pages/staff/admin/AdminMenuPage.jsx";
 import AdminFoodItemsPage from "../pages/staff/admin/AdminFoodItemsPage.jsx";
 import AdminTablesPage from "../pages/staff/admin/AdminTablesPage.jsx";
+import AdminTableQRCodesPage from "../pages/staff/admin/AdminTableQRCodesPage.jsx";
 import AdminCategoriesPage from "../pages/staff/admin/AdminCategoriesPage.jsx";
 import WaiterTablesPage from "../pages/staff/waiter/WaiterTablesPage.jsx";
 import ProfilePage from "../pages/customer/ProfilePage.jsx";
@@ -114,6 +115,11 @@ const AppRouter = () => {
                     <Route path={routes.ADMIN_TABLES} element={
                         <AdminRoute>
                             <AdminTablesPage />
+                        </AdminRoute>
+                    } />
+                    <Route path={routes.ADMIN_TABLE_QR_CODES} element={
+                        <AdminRoute>
+                            <AdminTableQRCodesPage />
                         </AdminRoute>
                     } />
                     <Route path={routes.ADMIN_CATEGORIES} element={

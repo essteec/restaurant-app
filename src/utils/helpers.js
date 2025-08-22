@@ -157,7 +157,31 @@ export const debounce = (func, wait) => {
  */
 export const getImageUrl = (imageName, fallback = '/images/placeholder.jpg') => {
   if (!imageName) return fallback;
-  return `${import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8080/images'}/${imageName}`;
+  // If already an absolute URL, return as-is
+  if (/^https?:\/\//i.test(imageName) || /^data:/i.test(imageName)) return imageName;
+
+  const base = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8080/images';
+  const baseHasImages = /\/images\/?$/.test(base);
+  // normalize imageName by removing leading slashes
+  let name = imageName.replace(/^\/+/, '');
+  // if base already contains '/images' and name starts with 'images/', remove the duplicate
+  if (baseHasImages && name.startsWith('images/')) {
+    name = name.replace(/^images\//, '');
+  }
+  return `${base}/${name}`;
+};
+
+export const getQrCodeUrl = (qrCodeName, fallback = '/qr-codes/placeholder.jpg') => {
+  if (!qrCodeName) return fallback;
+  if (/^https?:\/\//i.test(qrCodeName) || /^data:/i.test(qrCodeName)) return qrCodeName;
+
+  const base = import.meta.env.VITE_QR_BASE_URL || 'http://localhost:8080/qr-codes';
+  const baseHasQr = /\/qr-codes\/?$/.test(base);
+  let name = qrCodeName.replace(/^\/+/, '');
+  if (baseHasQr && name.startsWith('qr-codes/')) {
+    name = name.replace(/^qr-codes\//, '');
+  }
+  return `${base}/${name}`;
 };
 
 /**

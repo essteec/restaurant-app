@@ -18,6 +18,7 @@ const routes = {
     ADMIN_MENUS: '/admin/menus',
     ADMIN_FOOD_ITEMS: '/admin/foods',
     ADMIN_TABLES: '/admin/tables',
+    ADMIN_TABLE_QR_CODES: '/admin/tables/qr-codes',
     ADMIN_CATEGORIES: '/admin/categories',
     ADMIN_ANALYTICS: '/admin/analytics',
     ADMIN_ORDERS: '/admin/orders',
