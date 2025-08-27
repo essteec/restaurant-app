@@ -5,7 +5,7 @@ import useAuth from '../../../contexts/use-auth';
 import { DataTable } from '../../../components';
 import { useToast } from '../../../hooks/useToast.js';
 import { useConfirmation } from '../../../hooks/useConfirmation.js';
-import { PAGINATION } from '../../../utils/constants';
+import { PAGINATION, AVAILABLE_LANGUAGES } from '../../../utils/constants';
 import { getImageUrl } from '../../../utils/helpers';
 
 const AdminFoodItemsPage = () => {
@@ -14,8 +14,14 @@ const AdminFoodItemsPage = () => {
     const [error, setError] = useState(null);
     const [showItemModal, setShowItemModal] = useState(false);
     const [showContentModal, setShowContentModal] = useState(false);
+    const [showTranslationModal, setShowTranslationModal] = useState(false);
     const [currentItem, setCurrentItem] = useState(null); // For add/edit form
     const [selectedItemContent, setSelectedItemContent] = useState(null); // For view modal (with categories)
+    const [selectedItemForTranslation, setSelectedItemForTranslation] = useState(null); // For translation modal
+    const [translations, setTranslations] = useState([]);
+    const [currentTranslation, setCurrentTranslation] = useState(null);
+    const [isEditingTranslation, setIsEditingTranslation] = useState(false);
+    const [loadingTranslations, setLoadingTranslations] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [imageFile, setImageFile] = useState(null);
     const [categoriesForItem, setCategoriesForItem] = useState([]);
@@ -140,6 +146,113 @@ const AdminFoodItemsPage = () => {
         } finally {
             setLoadingAiDescription(false);
         }
+    };
+
+    // Translation management functions
+    const fetchTranslations = async (foodName) => {
+        try {
+            setLoadingTranslations(true);
+            const response = await apiClient.get(`/food-items/${encodeURIComponent(foodName)}/languages`);
+            const translationData = Array.isArray(response.data) ? response.data : [];
+            setTranslations(translationData);
+        } catch (err) {
+            showError('Failed to fetch translations');
+            console.error('Fetch translations error:', err);
+            setTranslations([]);
+        } finally {
+            setLoadingTranslations(false);
+        }
+    };
+
+    const handleTranslationsClick = async (item) => {
+        setSelectedItemForTranslation(item);
+        await fetchTranslations(item.foodName);
+        setShowTranslationModal(true);
+    };
+
+    const handleAddTranslationClick = () => {
+        setCurrentTranslation({
+            languageCode: '',
+            name: '',
+            description: ''
+        });
+        setIsEditingTranslation(false);
+    };
+
+    const handleEditTranslationClick = (translation) => {
+        setCurrentTranslation({ ...translation });
+        setIsEditingTranslation(true);
+    };
+
+    const handleSaveTranslation = async (e) => {
+        e.preventDefault();
+        if (!currentTranslation?.languageCode || !currentTranslation?.name?.trim()) {
+            showError('Language and translated name are required');
+            return;
+        }
+
+        try {
+            const payload = {
+                languageCode: currentTranslation.languageCode,
+                name: currentTranslation.name.trim(),
+                description: currentTranslation.description?.trim() || ''
+            };
+
+            if (isEditingTranslation) {
+                await apiClient.put(
+                    `/food-items/${encodeURIComponent(selectedItemForTranslation.foodName)}/languages/${currentTranslation.languageCode}`,
+                    payload
+                );
+                showSuccess('Translation updated successfully');
+            } else {
+                await apiClient.post(
+                    `/food-items/${encodeURIComponent(selectedItemForTranslation.foodName)}/languages`,
+                    payload
+                );
+                showSuccess('Translation added successfully');
+            }
+
+            await fetchTranslations(selectedItemForTranslation.foodName);
+            setCurrentTranslation(null);
+            setIsEditingTranslation(false);
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || `Failed to ${isEditingTranslation ? 'update' : 'add'} translation`;
+            showError(errorMessage);
+            console.error('Save translation error:', err);
+        }
+    };
+
+    const handleDeleteTranslation = async (translation) => {
+        const confirmed = await confirm({
+            title: 'Delete Translation',
+            message: `Are you sure you want to delete the ${translation.languageCode} translation?`,
+            confirmText: 'Delete',
+            confirmVariant: 'danger'
+        });
+
+        if (confirmed) {
+            try {
+                await apiClient.delete(
+                    `/food-items/${encodeURIComponent(selectedItemForTranslation.foodName)}/languages/${translation.languageCode}`
+                );
+                showSuccess('Translation deleted successfully');
+                await fetchTranslations(selectedItemForTranslation.foodName);
+            } catch (err) {
+                const errorMessage = err.response?.data?.message || 'Failed to delete translation';
+                showError(errorMessage);
+                console.error('Delete translation error:', err);
+            }
+        }
+    };
+
+    const getLanguageName = (langCode) => {
+        const lang = AVAILABLE_LANGUAGES.find(l => l.code === langCode);
+        return lang ? `${lang.flag} ${lang.name}` : langCode;
+    };
+
+    const getAvailableLanguages = () => {
+        const existingLanguages = translations.map(t => t.languageCode);
+        return AVAILABLE_LANGUAGES.filter(lang => !existingLanguages.includes(lang.code));
     };
 
     // Handlers adapted from menu version
@@ -371,6 +484,14 @@ const AdminFoodItemsPage = () => {
                         size="sm"
                         onClick={(e) => { e.stopPropagation(); handleViewFoodItemClick(item); }}
                     >View</Button>
+                    <Button
+                        variant="outline-info"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleTranslationsClick(item); }}
+                        title="Manage Translations"
+                    >
+                        <i className="bi bi-translate"></i>
+                    </Button>
                     <Button
                         variant="outline-secondary"
                         size="sm"
@@ -677,6 +798,179 @@ const AdminFoodItemsPage = () => {
                             }}
                         >Edit Food Item</Button>
                     )}
+                </Modal.Footer>
+            </Modal>
+
+            {/* Translation Management Modal */}
+            <Modal show={showTranslationModal} onHide={() => setShowTranslationModal(false)} size="xl">
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <i className="bi bi-translate me-2"></i>
+                        Manage Translations: {selectedItemForTranslation?.foodName}
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div><strong>Original Description: </strong>
+                        {selectedItemForTranslation?.description}
+                    </div>
+                        <br />
+
+                    {loadingTranslations && (
+                        <div className="text-center mb-3">
+                            <Spinner animation="border" size="sm" /> Loading translations...
+                        </div>
+                    )}
+                    
+                    {!loadingTranslations && (
+                        <>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h5 className="mb-0">Existing Translations ({translations.length})</h5>
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleAddTranslationClick}
+                                    disabled={getAvailableLanguages().length === 0}
+                                >
+                                    <i className="bi bi-plus-circle me-1"></i>
+                                    Add Translation
+                                </Button>
+                            </div>
+
+                            {getAvailableLanguages().length === 0 && (
+                                <Alert variant="info" className="mb-3">
+                                    <i className="bi bi-info-circle me-2"></i>
+                                    All supported languages have been translated.
+                                </Alert>
+                            )}
+
+                            {translations.length > 0 ? (
+                                <ListGroup className="mb-4">
+                                    {translations.map((translation, idx) => (
+                                        <ListGroup.Item key={idx} className="d-flex justify-content-between align-items-start">
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex align-items-center mb-2">
+                                                    <Badge bg="primary" className="me-2">
+                                                        {getLanguageName(translation.languageCode)}
+                                                    </Badge>
+                                                </div>
+                                                <div><strong>Name:</strong> {translation.name}</div>
+                                                {translation.description && (
+                                                    <div className="mt-1"><strong>Description:</strong> {translation.description}</div>
+                                                )}
+                                            </div>
+                                            <div className="d-flex gap-1">
+                                                <Button
+                                                    variant="outline-secondary"
+                                                    size="sm"
+                                                    onClick={() => handleEditTranslationClick(translation)}
+                                                >
+                                                    <i className="bi bi-pencil"></i>
+                                                </Button>
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteTranslation(translation)}
+                                                >
+                                                    <i className="bi bi-trash"></i>
+                                                </Button>
+                                            </div>
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            ) : (
+                                <Alert variant="secondary" className="mb-4">
+                                    <i className="bi bi-info-circle me-2"></i>
+                                    No translations available. Add your first translation to get started.
+                                </Alert>
+                            )}
+
+                            {/* Add/Edit Translation Form */}
+                            {currentTranslation && (
+                                <Card>
+                                    <Card.Header>
+                                        <h6 className="mb-0">
+                                            {isEditingTranslation ? 'Edit Translation' : 'Add New Translation'}
+                                        </h6>
+                                    </Card.Header>
+                                    <Card.Body>
+                                        <Form onSubmit={handleSaveTranslation}>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Language *</Form.Label>
+                                                {isEditingTranslation ? (
+                                                    <Form.Control
+                                                        type="text"
+                                                        value={getLanguageName(currentTranslation.languageCode)}
+                                                        disabled
+                                                    />
+                                                ) : (
+                                                    <Form.Select
+                                                        value={currentTranslation.languageCode}
+                                                        onChange={(e) => setCurrentTranslation({
+                                                            ...currentTranslation,
+                                                            languageCode: e.target.value
+                                                        })}
+                                                        required
+                                                    >
+                                                        <option value="">Select a language...</option>
+                                                        {getAvailableLanguages().map(lang => (
+                                                            <option key={lang.code} value={lang.code}>
+                                                                {lang.flag} {lang.name}
+                                                            </option>
+                                                        ))}
+                                                    </Form.Select>
+                                                )}
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Translated Name *</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    value={currentTranslation.name}
+                                                    onChange={(e) => setCurrentTranslation({
+                                                        ...currentTranslation,
+                                                        name: e.target.value
+                                                    })}
+                                                    required
+                                                    placeholder="Enter translated food name"
+                                                />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Translated Description</Form.Label>
+                                                <Form.Control
+                                                    as="textarea"
+                                                    rows={3}
+                                                    value={currentTranslation.description}
+                                                    onChange={(e) => setCurrentTranslation({
+                                                        ...currentTranslation,
+                                                        description: e.target.value
+                                                    })}
+                                                    placeholder="Enter translated description (optional)"
+                                                />
+                                            </Form.Group>
+                                            <div className="d-flex gap-2">
+                                                <Button variant="primary" type="submit">
+                                                    {isEditingTranslation ? 'Update Translation' : 'Add Translation'}
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={() => {
+                                                        setCurrentTranslation(null);
+                                                        setIsEditingTranslation(false);
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        </Form>
+                                    </Card.Body>
+                                </Card>
+                            )}
+                        </>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowTranslationModal(false)}>
+                        Close
+                    </Button>
                 </Modal.Footer>
             </Modal>
         </Container>

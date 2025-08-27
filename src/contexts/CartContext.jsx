@@ -8,6 +8,7 @@ export const CartProvider = ({ children }) => {
     // Lazy initialization to avoid post-mount overwrite
     const [cartItems, setCartItems] = useState(() => storage.get(STORAGE_KEYS.CART_ITEMS, []));
     const [selectedTable, setSelectedTable] = useState(() => storage.get(STORAGE_KEYS.SELECTED_TABLE, null));
+    const [isTableFromQr, setIsTableFromQr] = useState(() => storage.get(STORAGE_KEYS.IS_TABLE_FROM_QR, false));
     const [cartNotes, setCartNotes] = useState(() => storage.get(STORAGE_KEYS.CART_NOTES, ''));
     const [selectedAddress, setSelectedAddress] = useState(() => storage.get(STORAGE_KEYS.SELECTED_ADDRESS, null));
     const [addresses, setAddresses] = useState([]);
@@ -23,6 +24,7 @@ export const CartProvider = ({ children }) => {
     // Persist cart-related state
     useEffect(() => { storage.set(STORAGE_KEYS.CART_ITEMS, cartItems); }, [cartItems]);
     useEffect(() => { storage.set(STORAGE_KEYS.SELECTED_TABLE, selectedTable); }, [selectedTable]);
+    useEffect(() => { storage.set(STORAGE_KEYS.IS_TABLE_FROM_QR, isTableFromQr); }, [isTableFromQr]);
     useEffect(() => { storage.set(STORAGE_KEYS.CART_NOTES, cartNotes); }, [cartNotes]);
     useEffect(() => { storage.set(STORAGE_KEYS.SELECTED_ADDRESS, selectedAddress); }, [selectedAddress]);
 
@@ -108,15 +110,18 @@ export const CartProvider = ({ children }) => {
     const clearCart = () => {
         setCartItems([]);
         setSelectedTable(null);
+        setIsTableFromQr(false);
         setCartNotes('');
         storage.remove(STORAGE_KEYS.CART_ITEMS);
         storage.remove(STORAGE_KEYS.SELECTED_TABLE);
+        storage.remove(STORAGE_KEYS.IS_TABLE_FROM_QR);
         storage.remove(STORAGE_KEYS.CART_NOTES);
     };
 
-    const selectTable = (table) => {
-        console.log('CartContext: selectTable called with:', table);
+    const selectTable = (table, fromQr = false) => {
+        console.log('CartContext: selectTable called with:', table, 'fromQr:', fromQr);
         setSelectedTable(table);
+        setIsTableFromQr(fromQr);
     };
 
     const updateCartNotes = (notes) => {
@@ -157,6 +162,7 @@ export const CartProvider = ({ children }) => {
         // Table selection
         selectedTable,
         selectTable,
+        isTableFromQr,
         
         // Cart notes
         cartNotes,

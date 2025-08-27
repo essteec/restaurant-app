@@ -60,6 +60,7 @@ export const STORAGE_KEYS = {
   USER_PREFERENCES: 'userPreferences',
   CART_ITEMS: 'cartItems',
   SELECTED_TABLE: 'selectedTable',
+  IS_TABLE_FROM_QR: 'isTableFromQr',
   CART_NOTES: 'cartNotes',
   SELECTED_ADDRESS: 'selectedAddress',
 };
@@ -91,3 +92,20 @@ export const SUCCESS_MESSAGES = {
   PROFILE_UPDATED: 'Profile updated successfully!',
   PASSWORD_CHANGED: 'Password changed successfully!',
 };
+
+// Supported Languages
+export const AVAILABLE_LANGUAGES = [
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'tr', name: 'Turkish', flag: '🇹🇷' },
+  { code: 'es', name: 'Spanish', flag: '🇪🇸' },
+  { code: 'fr', name: 'French', flag: '🇫🇷' },
+  { code: 'de', name: 'German', flag: '🇩🇪' },
+  { code: 'it', name: 'Italian', flag: '🇮🇹' },
+  { code: 'pt', name: 'Portuguese', flag: '🇵🇹' },
+  { code: 'ru', name: 'Russian', flag: '🇷🇺' },
+  { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
+  { code: 'ja', name: 'Japanese', flag: '🇯🇵' },
+  { code: 'ko', name: 'Korean', flag: '🇰🇷' },
+  { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
+  { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
+];

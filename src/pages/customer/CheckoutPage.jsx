@@ -19,7 +19,8 @@ const CheckoutPage = () => {
         itemCount,
         isEmpty,
         selectedTable, // context value (object: { tableNumber })
-        selectTable
+        selectTable,
+        isTableFromQr
     } = useCart();
     const { user, isAuthenticated } = useAuth();
     const [addresses, setAddresses] = useState([]);
@@ -107,7 +108,7 @@ const CheckoutPage = () => {
         if (type === 'table') {
             // keep current table if any
         } else {
-            selectTable(null); // clear table when switching to delivery
+            selectTable(null, false); // clear table when switching to delivery
         }
         setError('');
     };
@@ -233,7 +234,7 @@ const CheckoutPage = () => {
                                 <h5 className="mb-0">Delivery Method</h5>
                             </Card.Header>
                             <Card.Body>
-                                {selectedTable && selectedTable.tableNumber && (
+                                {selectedTable && selectedTable.tableNumber && isTableFromQr && (
                                     <Alert variant="info" className="mb-3">
                                         <i className="bi bi-qr-code me-2"></i>
                                         <strong>QR Code Detected:</strong> Table {selectedTable.tableNumber} has been automatically selected for table service.
@@ -241,7 +242,7 @@ const CheckoutPage = () => {
                                 )}
 
                                 <Form>
-                                    <fieldset disabled={!!(selectedTable && selectedTable.tableNumber)} style={{ border: 'none', padding: 0, margin: 0 }}>
+                                    <fieldset disabled={!!(selectedTable && selectedTable.tableNumber && isTableFromQr)} style={{ border: 'none', padding: 0, margin: 0 }}>
                                         <div className="d-flex gap-3 mb-3">
                                             <Form.Check
                                                 type="radio"
@@ -280,7 +281,7 @@ const CheckoutPage = () => {
                                     <h5 className="mb-0">Select Table</h5>
                                 </Card.Header>
                                 <Card.Body>
-                                    {selectedTable && selectedTable.tableNumber && (
+                                    {selectedTable && selectedTable.tableNumber && isTableFromQr && (
                                         <Alert variant="success" className="mb-3">
                                             <i className="bi bi-qr-code me-2"></i>
                                             Table {selectedTable.tableNumber} selected from QR code
@@ -290,7 +291,7 @@ const CheckoutPage = () => {
                                         <Form.Label>Available Tables</Form.Label>
                                         <Form.Select
                                             value={selectedTable?.tableNumber || ''}
-                                            onChange={(e) => selectTable(e.target.value ? { tableNumber: e.target.value } : null)}
+                                            onChange={(e) => selectTable(e.target.value ? { tableNumber: e.target.value } : null, false)}
                                         >
                                             <option value="">Choose a table...</option>
                                             {availableTables.map(table => (

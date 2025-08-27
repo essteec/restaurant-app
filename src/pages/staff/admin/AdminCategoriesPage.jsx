@@ -5,7 +5,7 @@ import useAuth from '../../../contexts/use-auth';
 import { DataTable } from '../../../components';
 import { useToast } from '../../../hooks/useToast.js';
 import { useConfirmation } from '../../../hooks/useConfirmation.js';
-import { PAGINATION } from '../../../utils/constants';
+import { PAGINATION, AVAILABLE_LANGUAGES } from '../../../utils/constants';
 
 const AdminCategoriesPage = () => {
     const [categories, setCategories] = useState([]);
@@ -14,9 +14,15 @@ const AdminCategoriesPage = () => {
     const [showCategoryModal, setShowCategoryModal] = useState(false);
     const [showContentModal, setShowContentModal] = useState(false);
     const [showManageFoodItemsModal, setShowManageFoodItemsModal] = useState(false);
+    const [showTranslationModal, setShowTranslationModal] = useState(false);
     const [currentCategory, setCurrentCategory] = useState(null);
     const [selectedCategoryContent, setSelectedCategoryContent] = useState(null);
     const [selectedCategoryForFoodItems, setSelectedCategoryForFoodItems] = useState(null);
+    const [selectedCategoryForTranslation, setSelectedCategoryForTranslation] = useState(null);
+    const [translations, setTranslations] = useState([]);
+    const [currentTranslation, setCurrentTranslation] = useState(null);
+    const [isEditingTranslation, setIsEditingTranslation] = useState(false);
+    const [loadingTranslations, setLoadingTranslations] = useState(false);
     const [availableFoodItems, setAvailableFoodItems] = useState([]);
     const [categoryFoodItems, setCategoryFoodItems] = useState([]);
     const [originalCategoryFoodItems, setOriginalCategoryFoodItems] = useState([]);
@@ -140,6 +146,111 @@ const AdminCategoriesPage = () => {
         } catch (err) {
             throw err;
         }
+    };
+
+    // Translation management functions
+    const fetchTranslations = async (categoryName) => {
+        try {
+            setLoadingTranslations(true);
+            const response = await apiClient.get(`/categories/${encodeURIComponent(categoryName)}/languages`);
+            const translationData = Array.isArray(response.data) ? response.data : [];
+            setTranslations(translationData);
+        } catch (err) {
+            showError('Failed to fetch translations');
+            console.error('Fetch translations error:', err);
+            setTranslations([]);
+        } finally {
+            setLoadingTranslations(false);
+        }
+    };
+
+    const handleTranslationsClick = async (category) => {
+        setSelectedCategoryForTranslation(category);
+        await fetchTranslations(category.categoryName);
+        setShowTranslationModal(true);
+    };
+
+    const handleAddTranslationClick = () => {
+        setCurrentTranslation({
+            languageCode: '',
+            name: ''
+        });
+        setIsEditingTranslation(false);
+    };
+
+    const handleEditTranslationClick = (translation) => {
+        setCurrentTranslation({ ...translation });
+        setIsEditingTranslation(true);
+    };
+
+    const handleSaveTranslation = async (e) => {
+        e.preventDefault();
+        if (!currentTranslation?.languageCode || !currentTranslation?.name?.trim()) {
+            showError('Language and translated name are required');
+            return;
+        }
+
+        try {
+            const payload = {
+                languageCode: currentTranslation.languageCode,
+                name: currentTranslation.name.trim()
+            };
+
+            if (isEditingTranslation) {
+                await apiClient.put(
+                    `/categories/${encodeURIComponent(selectedCategoryForTranslation.categoryName)}/languages/${currentTranslation.languageCode}`,
+                    payload
+                );
+                showSuccess('Translation updated successfully');
+            } else {
+                await apiClient.post(
+                    `/categories/${encodeURIComponent(selectedCategoryForTranslation.categoryName)}/languages`,
+                    payload
+                );
+                showSuccess('Translation added successfully');
+            }
+
+            await fetchTranslations(selectedCategoryForTranslation.categoryName);
+            setCurrentTranslation(null);
+            setIsEditingTranslation(false);
+        } catch (err) {
+            const errorMessage = err.response?.data?.message || `Failed to ${isEditingTranslation ? 'update' : 'add'} translation`;
+            showError(errorMessage);
+            console.error('Save translation error:', err);
+        }
+    };
+
+    const handleDeleteTranslation = async (translation) => {
+        const confirmed = await confirm({
+            title: 'Delete Translation',
+            message: `Are you sure you want to delete the ${translation.languageCode} translation?`,
+            confirmText: 'Delete',
+            confirmVariant: 'danger'
+        });
+
+        if (confirmed) {
+            try {
+                await apiClient.delete(
+                    `/categories/${encodeURIComponent(selectedCategoryForTranslation.categoryName)}/languages/${translation.languageCode}`
+                );
+                showSuccess('Translation deleted successfully');
+                await fetchTranslations(selectedCategoryForTranslation.categoryName);
+            } catch (err) {
+                const errorMessage = err.response?.data?.message || 'Failed to delete translation';
+                showError(errorMessage);
+                console.error('Delete translation error:', err);
+            }
+        }
+    };
+
+    const getLanguageName = (langCode) => {
+        const lang = AVAILABLE_LANGUAGES.find(l => l.code === langCode);
+        return lang ? `${lang.flag} ${lang.name}` : langCode;
+    };
+
+    const getAvailableLanguages = () => {
+        const existingLanguages = translations.map(t => t.languageCode);
+        return AVAILABLE_LANGUAGES.filter(lang => !existingLanguages.includes(lang.code));
     };
 
     const handleAddCategoryClick = () => {
@@ -378,6 +489,14 @@ const AdminCategoriesPage = () => {
                         size="sm"
                         onClick={(e) => { e.stopPropagation(); handleViewCategoryClick(category); }}
                     >View</Button>
+                    <Button
+                        variant="outline-info"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); handleTranslationsClick(category); }}
+                        title="Manage Translations"
+                    >
+                        <i className="bi bi-translate"></i>
+                    </Button>
                     <Button
                         variant="outline-secondary"
                         size="sm"
@@ -733,6 +852,158 @@ const AdminCategoriesPage = () => {
                         ) : (
                             <>Accept Changes ({pendingChanges.toAdd.length + pendingChanges.toRemove.length})</>
                         )}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Translation Management Modal */}
+            <Modal show={showTranslationModal} onHide={() => setShowTranslationModal(false)} size="xl">
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <i className="bi bi-translate me-2"></i>
+                        Manage Translations: {selectedCategoryForTranslation?.categoryName}
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {loadingTranslations && (
+                        <div className="text-center mb-3">
+                            <Spinner animation="border" size="sm" /> Loading translations...
+                        </div>
+                    )}
+                    
+                    {!loadingTranslations && (
+                        <>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h5 className="mb-0">Existing Translations ({translations.length})</h5>
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleAddTranslationClick}
+                                    disabled={getAvailableLanguages().length === 0}
+                                >
+                                    <i className="bi bi-plus-circle me-1"></i>
+                                    Add Translation
+                                </Button>
+                            </div>
+
+                            {getAvailableLanguages().length === 0 && (
+                                <Alert variant="info" className="mb-3">
+                                    <i className="bi bi-info-circle me-2"></i>
+                                    All supported languages have been translated.
+                                </Alert>
+                            )}
+
+                            {translations.length > 0 ? (
+                                <ListGroup className="mb-4">
+                                    {translations.map((translation, idx) => (
+                                        <ListGroup.Item key={idx} className="d-flex justify-content-between align-items-start">
+                                            <div className="flex-grow-1">
+                                                <div className="d-flex align-items-center mb-2">
+                                                    <Badge bg="primary" className="me-2">
+                                                        {getLanguageName(translation.languageCode)}
+                                                    </Badge>
+                                                </div>
+                                                <div><strong>Name:</strong> {translation.name}</div>
+                                            </div>
+                                            <div className="d-flex gap-1">
+                                                <Button
+                                                    variant="outline-secondary"
+                                                    size="sm"
+                                                    onClick={() => handleEditTranslationClick(translation)}
+                                                >
+                                                    <i className="bi bi-pencil"></i>
+                                                </Button>
+                                                <Button
+                                                    variant="outline-danger"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteTranslation(translation)}
+                                                >
+                                                    <i className="bi bi-trash"></i>
+                                                </Button>
+                                            </div>
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+                            ) : (
+                                <Alert variant="secondary" className="mb-4">
+                                    <i className="bi bi-info-circle me-2"></i>
+                                    No translations available. Add your first translation to get started.
+                                </Alert>
+                            )}
+
+                            {/* Add/Edit Translation Form */}
+                            {currentTranslation && (
+                                <Card>
+                                    <Card.Header>
+                                        <h6 className="mb-0">
+                                            {isEditingTranslation ? 'Edit Translation' : 'Add New Translation'}
+                                        </h6>
+                                    </Card.Header>
+                                    <Card.Body>
+                                        <Form onSubmit={handleSaveTranslation}>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Language *</Form.Label>
+                                                {isEditingTranslation ? (
+                                                    <Form.Control
+                                                        type="text"
+                                                        value={getLanguageName(currentTranslation.languageCode)}
+                                                        disabled
+                                                    />
+                                                ) : (
+                                                    <Form.Select
+                                                        value={currentTranslation.languageCode}
+                                                        onChange={(e) => setCurrentTranslation({
+                                                            ...currentTranslation,
+                                                            languageCode: e.target.value
+                                                        })}
+                                                        required
+                                                    >
+                                                        <option value="">Select a language...</option>
+                                                        {getAvailableLanguages().map(lang => (
+                                                            <option key={lang.code} value={lang.code}>
+                                                                {lang.flag} {lang.name}
+                                                            </option>
+                                                        ))}
+                                                    </Form.Select>
+                                                )}
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label>Translated Name *</Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    value={currentTranslation.name}
+                                                    onChange={(e) => setCurrentTranslation({
+                                                        ...currentTranslation,
+                                                        name: e.target.value
+                                                    })}
+                                                    required
+                                                    placeholder="Enter translated category name"
+                                                />
+                                            </Form.Group>
+                                            <div className="d-flex gap-2">
+                                                <Button variant="primary" type="submit">
+                                                    {isEditingTranslation ? 'Update Translation' : 'Add Translation'}
+                                                </Button>
+                                                <Button
+                                                    variant="secondary"
+                                                    onClick={() => {
+                                                        setCurrentTranslation(null);
+                                                        setIsEditingTranslation(false);
+                                                    }}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </div>
+                                        </Form>
+                                    </Card.Body>
+                                </Card>
+                            )}
+                        </>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowTranslationModal(false)}>
+                        Close
                     </Button>
                 </Modal.Footer>
             </Modal>

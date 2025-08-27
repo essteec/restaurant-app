@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Tabs, Tab, Badge, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Tabs, Tab, Badge, Alert, Dropdown } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
 import { publicApiClient } from '@api';
 import { useCart } from "@contexts/use-cart.js";
@@ -10,13 +10,45 @@ import './MenuPage.css'; // We'll create this for custom styles
 
 const MenuPage = () => {
     const [categories, setCategories] = useState([]);
+    const [supportedLanguages, setSupportedLanguages] = useState([]);
+    const [selectedLanguage, setSelectedLanguage] = useState('en');
     const [loading, setLoading] = useState(true);
+    const [languagesLoading, setLanguagesLoading] = useState(true);
     const [error, setError] = useState(null);
     const [successMessage, setSuccessMessage] = useState('');
     const [searchParams] = useSearchParams();
     const { addItem, selectTable, selectedTable } = useCart();
     const [activeTab, setActiveTab] = useState('');
 
+    useEffect(() => {
+        // Fetch supported languages on component mount
+        const fetchSupportedLanguages = async () => {
+            try {
+                setLanguagesLoading(true);
+                console.log('Fetching supported languages...');
+                const response = await publicApiClient.get('/languages/supported');
+                console.log('Supported languages response:', response.data);
+                
+                if (response.data && Array.isArray(response.data)) {
+                    setSupportedLanguages(response.data);
+                } else {
+                    console.warn('Unexpected language response format:', response.data);
+                    setSupportedLanguages(['en']); // Fallback to English
+                }
+            } catch (err) {
+                console.error('Failed to fetch supported languages:', err);
+                // Fallback languages based on what we know from the backend
+                const fallbackLanguages = ['en', 'tr']; // English and Turkish as defaults
+                setSupportedLanguages(fallbackLanguages);
+                console.log('Using fallback languages:', fallbackLanguages);
+            } finally {
+                setLanguagesLoading(false);
+            }
+        };
+
+        fetchSupportedLanguages();
+    }, []);
+    
     useEffect(() => {
         let isMounted = true;
         const tableParam = searchParams.get('table');
@@ -25,7 +57,7 @@ const MenuPage = () => {
         }
         if (tableParam && (!selectedTable || selectedTable.tableNumber !== tableParam)) {
             console.log('QR table detected in MenuPage (setting):', tableParam);
-            selectTable({ tableNumber: tableParam });
+            selectTable({ tableNumber: tableParam }, true); // Pass true to indicate it's from QR
             setSuccessMessage(`🏷️ Table ${tableParam} selected from QR code!`);
             setTimeout(() => setSuccessMessage(''), 4000);
         } else if (tableParam) {
@@ -37,10 +69,14 @@ const MenuPage = () => {
                 setLoading(true);
                 setError(null);
                 
-                console.log('Fetching menu data...');
+                console.log('Fetching menu data with language:', selectedLanguage);
                 
-                // Try to get the active menu first (recommended approach)
-                const activeMenuResponse = await publicApiClient.get('/menus/active');
+                // Get the active menu with language header
+                const activeMenuResponse = await publicApiClient.get('/menus/active', {
+                    headers: {
+                        'Accept-Language': selectedLanguage
+                    }
+                });
                 console.log('Active menu response:', activeMenuResponse.data);
                 
                 if (activeMenuResponse.data && activeMenuResponse.data.length > 0) {
@@ -78,7 +114,31 @@ const MenuPage = () => {
         return () => {
             isMounted = false;
         };
-    }, [searchParams, selectedTable, selectTable]);
+    }, [searchParams, selectedTable, selectTable, selectedLanguage]);
+
+    const handleLanguageChange = (langCode) => {
+        console.log('Language changed to:', langCode);
+        setSelectedLanguage(langCode);
+        setActiveTab(''); // Reset active tab when language changes
+    };
+
+    const getLanguageDisplayName = (langCode) => {
+        const languageNames = {
+            'en': 'English 🇺🇸',
+            'tr': 'Türkçe 🇹🇷',
+            'es': 'Español 🇪🇸',
+            'fr': 'Français 🇫🇷',
+            'de': 'Deutsch 🇩🇪',
+            'it': 'Italiano 🇮🇹',
+            'pt': 'Português 🇵🇹',
+            'ru': 'Русский 🇷🇺',
+            'zh': '中文 🇨🇳',
+            'ja': '日本語 🇯🇵',
+            'ko': '한국어 🇰🇷',
+            'ar': 'العربية 🇸🇦'
+        };
+        return languageNames[langCode] || langCode.toUpperCase();
+    };
 
     const handleAddToCart = (item) => { 
         try {
@@ -108,7 +168,7 @@ const MenuPage = () => {
                 <div className="food-image-container">
                     {imageUrl && !imageError ? (
                         <Card.Img 
-                            variant="top" 
+                            variant="top"
                             src={imageUrl}
                             className="food-image"
                             onError={() => setImageError(true)}
@@ -155,12 +215,14 @@ const MenuPage = () => {
         );
     };
 
-    if (loading) {
+    if (loading || languagesLoading) {
         return (
             <Container className="menu-loading-container">
                 <div className="text-center py-5">
                     <LoadingSpinner size="lg" />
-                    <h4 className="mt-3 text-muted">Loading our delicious menu...</h4>
+                    <h4 className="mt-3 text-muted">
+                        {languagesLoading ? 'Loading languages...' : 'Loading our delicious menu...'}
+                    </h4>
                     <p className="text-muted">Please wait while we fetch the latest dishes</p>
                 </div>
             </Container>
@@ -220,13 +282,38 @@ const MenuPage = () => {
                             </p>
                         </Col>
                         <Col md={4} className="text-end">
-                            <div className="menu-stats">
-                                <Badge bg="secondary" className="me-2">
-                                    {categories.length} Categories
-                                </Badge>
-                                <Badge bg="info">
-                                    {categories.reduce((total, cat) => total + (cat.foods?.length || 0), 0)} Dishes
-                                </Badge>
+                            <div className="d-flex align-items-center justify-content-end gap-3">
+                                
+                                {/* Language Selector - Always show if languages are available */}
+                                {supportedLanguages.length > 0 && (
+                                    <Dropdown>
+                                        <Dropdown.Toggle variant="primary" id="language-dropdown" size="sm">
+                                            <i className="bi bi-globe me-2"></i>
+                                            {getLanguageDisplayName(selectedLanguage)}
+                                        </Dropdown.Toggle>
+                                        <Dropdown.Menu>
+                                            <Dropdown.Header>Select Language</Dropdown.Header>
+                                            <Dropdown.Item
+                                                key={'en'}
+                                                active={'en' === selectedLanguage}
+                                                onClick={() => handleLanguageChange('en')}
+                                                className="d-flex align-items-center gap-2"
+                                            >
+                                                Default
+                                            </Dropdown.Item>
+                                                {supportedLanguages.map(langCode => (
+                                            <Dropdown.Item
+                                                key={langCode}
+                                                active={langCode === selectedLanguage}
+                                                onClick={() => handleLanguageChange(langCode)}
+                                                className="d-flex align-items-center gap-2"
+                                            >
+                                                {getLanguageDisplayName(langCode)}
+                                            </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                )}
                             </div>
                         </Col>
                     </Row>
@@ -244,6 +331,7 @@ const MenuPage = () => {
                         ✅ {successMessage}
                     </Alert>
                 )}
+
                 <Tabs
                     activeKey={activeTab || (categories.length > 0 ? categories[0].categoryName : '')}
                     onSelect={setActiveTab}
