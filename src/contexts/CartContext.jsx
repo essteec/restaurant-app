@@ -34,6 +34,7 @@ export const CartProvider = ({ children }) => {
             // Normalize item shape
             const normalized = {
                 foodName: itemToAdd.foodName || itemToAdd.name, // support both
+                originalFoodName: itemToAdd.originalFoodName || itemToAdd.foodName || itemToAdd.name, // Store original name
                 price: itemToAdd.price,
                 image: itemToAdd.image || itemToAdd.imageUrl || itemToAdd.imagePath,
                 description: itemToAdd.description || '',
@@ -142,7 +143,11 @@ export const CartProvider = ({ children }) => {
         }
 
         const base = {
-            orderItems: cartItems.map(item => ({ foodName: item.foodName, quantity: item.quantity, note: item.notes || '' })),
+            orderItems: cartItems.map(item => ({ 
+                foodName: item.originalFoodName || item.foodName, // Use original name for backend
+                quantity: item.quantity, 
+                note: item.notes || '' 
+            })),
             notes: cartNotes
         };
         if (selectedTable) base.tableNumber = selectedTable.tableNumber;

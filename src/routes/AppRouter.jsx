@@ -15,6 +15,7 @@ import AdminFoodItemsPage from "../pages/staff/admin/AdminFoodItemsPage.jsx";
 import AdminTablesPage from "../pages/staff/admin/AdminTablesPage.jsx";
 import AdminTableQRCodesPage from "../pages/staff/admin/AdminTableQRCodesPage.jsx";
 import AdminCategoriesPage from "../pages/staff/admin/AdminCategoriesPage.jsx";
+import AdminTranslationsPage from "../pages/staff/admin/AdminTranslationsPage.jsx";
 import WaiterTablesPage from "../pages/staff/waiter/WaiterTablesPage.jsx";
 import ProfilePage from "../pages/customer/ProfilePage.jsx";
 import EmployeeProfilePage from "../pages/staff/EmployeeProfilePage.jsx";
@@ -110,6 +111,11 @@ const AppRouter = () => {
                     <Route path={routes.ADMIN_FOOD_ITEMS} element={
                         <AdminRoute>
                             <AdminFoodItemsPage />
+                        </AdminRoute>
+                    } />
+                    <Route path={routes.ADMIN_TRANSLATIONS} element={
+                        <AdminRoute>
+                            <AdminTranslationsPage />
                         </AdminRoute>
                     } />
                     <Route path={routes.ADMIN_TABLES} element={

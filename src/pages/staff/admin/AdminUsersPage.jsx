@@ -46,7 +46,9 @@ const AdminUsersPage = () => {
     const { showSuccess, showError, showWarning, showInfo } = useToast();
     const { confirm } = useConfirmation();
     const showConfirmation = confirm; // alias for existing calls
-    
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchInputValue, setSearchInputValue] = useState('');
+
     // Helper function to maintain compatibility
     const showToast = (message, type = 'info') => {
         switch (type) {
@@ -66,7 +68,7 @@ const AdminUsersPage = () => {
         }
 
         fetchUsers();
-    }, [isAuthenticated, user, pagination.page, pagination.size, filteredRole]);
+    }, [isAuthenticated, user, pagination.page, pagination.size, filteredRole, searchQuery]);
 
     const fetchUsers = async () => {
         try {
@@ -77,7 +79,15 @@ const AdminUsersPage = () => {
                 sort: 'firstName,asc'
             });
             if (filteredRole) params.append('role', filteredRole);
-            const response = await apiClient.get(`/users/?${params}`);
+            
+            let response;
+            if (searchQuery?.trim()) {
+                params.append('query', searchQuery.trim());
+                response = await apiClient.get(`/users/search?${params}`);
+            } else {
+                response = await apiClient.get(`/users/?${params}`);
+            }
+
             const data = response.data;
             const content = (data.content || []).map(u => ({
                 ...u,
@@ -399,6 +409,18 @@ const AdminUsersPage = () => {
         setPagination(prev => ({ ...prev, page: 0, size: newSize }));
     };
 
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        setSearchQuery(searchInputValue);
+        setPagination(prev => ({ ...prev, page: 0 })); // Reset to first page when searching
+    };
+
+    const handleSearchClear = () => {
+        setSearchInputValue('');
+        setSearchQuery('');
+        setPagination(prev => ({ ...prev, page: 0 }));
+    };
+
     // DataTable columns configuration
     const columns = [
         { 
@@ -495,52 +517,91 @@ const AdminUsersPage = () => {
                         </Button>
                     </div>
 
-                    {/* Filters */}
+                    {/* Search Bar and Role Filter */}
                     <Card className="mb-4">
                         <Card.Body>
-                            <Row>
-                                <Col md={6}>
-                                    <Form.Group>
-                                        <Form.Label>Filter by Role</Form.Label>
-                                        <Form.Select
-                                            value={filteredRole}
-                                            onChange={(e) => {
-                                                setFilteredRole(e.target.value);
-                                                setPagination(prev => ({ ...prev, page: 0 }));
-                                            }}
-                                        >
-                                            <option value="">All Roles</option>
-                                            {Object.values(USER_ROLES).map(role => (
-                                                <option key={role} value={role}>{role}</option>
-                                            ))}
-                                        </Form.Select>
-                                    </Form.Group>
-                                </Col>
-                                <Col md={6} className="d-flex align-items-end">
-                                    <div className="ms-auto">
-                                        <small className="text-muted">
-                                            Total: {pagination.totalElements} users
-                                        </small>
-                                    </div>
-                                </Col>
-                            </Row>
+                            <Form onSubmit={handleSearchSubmit}>
+                                <Row className="align-items-end">
+                                    <Col md={4} lg={5}>
+                                        <Form.Group>
+                                            <Form.Control
+                                                type="text"
+                                                placeholder="Search users..."
+                                                value={searchInputValue}
+                                                onChange={(e) => setSearchInputValue(e.target.value)}
+                                            />
+                                        </Form.Group>
+                                    </Col>
+                                    <Col md={3} lg={4}>
+                                        <div className="d-flex gap-2">
+                                            <Button
+                                                type="submit"
+                                                variant="primary"
+                                                disabled={loading}
+                                            >
+                                                <i className="bi bi-search me-1"></i>
+                                                Search
+                                            </Button>
+                                            {searchQuery && (
+                                                <Button
+                                                    variant="outline-secondary"
+                                                    onClick={handleSearchClear}
+                                                    disabled={loading}
+                                                    title="Clear Search"
+                                                >
+                                                    <i className="bi bi-x-circle me-1"></i>
+                                                </Button>
+                                            )}
+                                            <small className="text-muted align-self-center ms-1">
+                                        <span> ({pagination.totalElements} result{pagination.totalElements !== 1 ? 's' : ''})</span>
+                                            </small>
+                                        </div>
+                                    </Col>
+                                    <Col md={2} lg={3}>
+                                        <Form.Group>
+                                            <Form.Select
+                                                value={filteredRole}
+                                                onChange={(e) => {
+                                                    setFilteredRole(e.target.value);
+                                                    setPagination(prev => ({ ...prev, page: 0 }));
+                                                }}
+                                            >
+                                                <option value="">All Roles</option>
+                                                {Object.values(USER_ROLES).map(role => (
+                                                    <option key={role} value={role}>{role}</option>
+                                                ))}
+                                            </Form.Select>
+                                        </Form.Group>
+                                    </Col>
+                                </Row>
+                            </Form>
                         </Card.Body>
                     </Card>
 
-                    {/* Users DataTable */}
-                    <Card>
-                        <Card.Body>
-                            <DataTable
-                                data={users}
-                                columns={columns}
-                                loading={loading}
-                                searchable={true}
-                                sortable={true}
-                                paginated={false}
-                                emptyMessage="No users found"
-                            />
-                        </Card.Body>
-                    </Card>
+                    {users.length === 0 ? (
+                        <Card>
+                            <Card.Body className="text-center">
+                                <p className="text-muted">No users found matching your search. Try a different search term.</p>
+                                <Button variant="primary" onClick={handleSearchClear}>
+                                    Clear Search
+                                </Button>
+                            </Card.Body>
+                        </Card>
+                        ) : (
+                        <Card>
+                            <Card.Body>
+                                <DataTable
+                                    data={users}
+                                    columns={columns}
+                                    loading={loading}
+                                    searchable={false}
+                                    sortable={true}
+                                    paginated={false}
+                                    emptyMessage={"No users found" + (searchQuery ? ` matching "${searchQuery}"` : '')}
+                                />
+                            </Card.Body>
+                        </Card>
+                    )}
                 </Col>
             </Row>
 

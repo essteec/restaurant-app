@@ -135,7 +135,8 @@ const MenuPage = () => {
             'zh': '中文 🇨🇳',
             'ja': '日本語 🇯🇵',
             'ko': '한국어 🇰🇷',
-            'ar': 'العربية 🇸🇦'
+            'ar': 'العربية 🇸🇦',
+            'hi': 'हिन्दी 🇮🇳'
         };
         return languageNames[langCode] || langCode.toUpperCase();
     };
@@ -145,6 +146,7 @@ const MenuPage = () => {
             addItem({
                 id: item.foodId || item.id,
                 foodName: item.foodName,
+                originalFoodName: item.originalFoodName || item.foodName, // Store original name for backend
                 price: item.price,
                 image: item.image,
                 description: item.description

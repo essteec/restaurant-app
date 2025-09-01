@@ -29,6 +29,8 @@ const AdminCategoriesPage = () => {
     const [pendingChanges, setPendingChanges] = useState({ toAdd: [], toRemove: [] });
     const [loadingFoodItems, setLoadingFoodItems] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchInputValue, setSearchInputValue] = useState('');
 
     // Pagination state
     const [pagination, setPagination] = useState({
@@ -49,7 +51,7 @@ const AdminCategoriesPage = () => {
             return;
         }
         fetchCategories();
-    }, [isAuthenticated, user, pagination.page, pagination.size]);
+    }, [isAuthenticated, user, pagination.page, pagination.size, searchQuery]);
 
     const fetchCategories = async () => {
         try {
@@ -59,14 +61,27 @@ const AdminCategoriesPage = () => {
                 size: pagination.size.toString(),
                 sort: 'categoryName,asc'
             });
-            const response = await apiClient.get(`/categories?${params}`);
+
+            let response;
+            if (searchQuery?.trim()) {
+                // Use search endpoint when there's a search query
+                params.append('query', searchQuery.trim());
+                response = await apiClient.get(`/categories/search?${params}`);
+            } else {
+                // Use regular endpoint when no search query
+                response = await apiClient.get(`/categories?${params}`);
+            }
+
             // Categories endpoint may return paginated data or array
             const data = response.data;
             const categoryData = Array.isArray(data)
                 ? data
                 : (data.content || []);
-            // Sort alphabetically for consistency
-            categoryData.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+            
+            // Only sort if not using search (search results should maintain relevance order)
+            if (!searchQuery?.trim()) {
+                categoryData.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+            }
             
             // Handle empty page
             if (categoryData.length === 0 && pagination.page > 0) {
@@ -98,6 +113,19 @@ const AdminCategoriesPage = () => {
     
     const handlePageSizeChange = (newSize) => {
         setPagination(prev => ({ ...prev, page: 0, size: newSize }));
+    };
+
+    // Search handlers
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        setSearchQuery(searchInputValue);
+        setPagination(prev => ({ ...prev, page: 0 })); // Reset to first page when searching
+    };
+
+    const handleSearchClear = () => {
+        setSearchInputValue('');
+        setSearchQuery('');
+        setPagination(prev => ({ ...prev, page: 0 }));
     };
 
     const fetchCategoryByName = async (categoryName) => {
@@ -534,6 +562,10 @@ const AdminCategoriesPage = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1>Category Management</h1>
                 <div className="d-flex gap-2">
+                    <Button variant="outline-secondary" onClick={() => window.location.href = '/admin/translations'}>
+                        <i className="bi bi-translate me-2"></i>
+                        Translations
+                    </Button>
                     <Button variant="primary" onClick={handleAddCategoryClick}>
                         <i className="bi bi-plus-circle me-2"></i>
                         Add New Category
@@ -541,24 +573,80 @@ const AdminCategoriesPage = () => {
                 </div>
             </div>
 
+            {/* Search Bar */}
+            <Card className="mb-4">
+                <Card.Body>
+                    <Form onSubmit={handleSearchSubmit}>
+                        <Row className="align-items-end">
+                            <Col md={4} lg={5}>
+                                <Form.Group>
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Search by category name..."
+                                        value={searchInputValue}
+                                        onChange={(e) => setSearchInputValue(e.target.value)}
+                                    />
+                                </Form.Group>
+                            </Col>
+                            <Col md={3} lg={4}>
+                                <div className="d-flex gap-2">
+                                    <Button 
+                                        type="submit" 
+                                        variant="primary"
+                                        disabled={loading}
+                                    >
+                                        <i className="bi bi-search me-1"></i>
+                                        Search
+                                    </Button>
+                                    {searchQuery && (
+                                        <Button 
+                                            variant="outline-secondary"
+                                            onClick={handleSearchClear}
+                                            disabled={loading}
+                                            title="Clear search"
+                                        >
+                                            <i className="bi bi-x-circle"></i>
+                                        </Button>
+                                    )}
+                                    <small className="text-muted align-self-center ms-1">
+                                        <span> ({pagination.totalElements} result{pagination.totalElements !== 1 ? 's' : ''})</span>
+                                    </small>
+                                </div>
+                            </Col>
+                        </Row>
+                    </Form>
+                </Card.Body>
+            </Card>
+
             {categories.length === 0 ? (
-                <Card>
-                    <Card.Body className="text-center">
-                        <p className="text-muted">No categories found. Create your first category to get started.</p>
-                        <Button variant="primary" onClick={handleAddCategoryClick}>
-                            Create First Category
-                        </Button>
-                    </Card.Body>
-                </Card>
+                searchQuery ? (
+                    <Card>
+                        <Card.Body className="text-center">
+                            <p className="text-muted">No categories found matching your search. Try a different search term.</p>
+                            <Button variant="primary" onClick={handleSearchClear}>
+                                Clear Search
+                            </Button>
+                        </Card.Body>
+                    </Card>
+                ) : (
+                    <Card>
+                        <Card.Body className="text-center">
+                            <p className="text-muted">No categories found. Create your first category to get started.</p>
+                            <Button variant="primary" onClick={handleAddCategoryClick}>
+                                Create First Category
+                            </Button>
+                        </Card.Body>
+                    </Card>
+                )
             ) : (
                 <DataTable
                     data={categories}
                     columns={columns}
                     loading={loading}
-                    searchable={true}
+                    searchable={false}
                     sortable={true}
                     paginated={false}
-                    emptyMessage="No categories found"
+                    emptyMessage={searchQuery ? `No categories found matching "${searchQuery}"` : "No categories found"}
                 />
             )}
 
@@ -889,7 +977,7 @@ const AdminCategoriesPage = () => {
                             {getAvailableLanguages().length === 0 && (
                                 <Alert variant="info" className="mb-3">
                                     <i className="bi bi-info-circle me-2"></i>
-                                    All supported languages have been translated.
+                                    All available languages have been translated.
                                 </Alert>
                             )}
 
@@ -944,11 +1032,17 @@ const AdminCategoriesPage = () => {
                                             <Form.Group className="mb-3">
                                                 <Form.Label>Language *</Form.Label>
                                                 {isEditingTranslation ? (
-                                                    <Form.Control
-                                                        type="text"
-                                                        value={getLanguageName(currentTranslation.languageCode)}
-                                                        disabled
-                                                    />
+                                                    <>
+                                                        <Form.Select
+                                                            type="text"
+                                                            value={getLanguageName(currentTranslation.languageCode)}
+                                                            disabled
+                                                        >
+                                                            <option>
+                                                                {getLanguageName(currentTranslation.languageCode)}
+                                                            </option>
+                                                        </Form.Select>
+                                                    </>
                                                 ) : (
                                                     <Form.Select
                                                         value={currentTranslation.languageCode}

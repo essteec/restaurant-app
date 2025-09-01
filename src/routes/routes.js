@@ -17,6 +17,7 @@ const routes = {
     ADMIN_USERS: '/admin/users',
     ADMIN_MENUS: '/admin/menus',
     ADMIN_FOOD_ITEMS: '/admin/foods',
+    ADMIN_TRANSLATIONS: '/admin/translations',
     ADMIN_TABLES: '/admin/tables',
     ADMIN_TABLE_QR_CODES: '/admin/tables/qr-codes',
     ADMIN_CATEGORIES: '/admin/categories',

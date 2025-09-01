@@ -16,7 +16,7 @@ import {
 import { useCart } from '../../contexts/use-cart.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast.js';
-import { formatCurrency, getImageUrl } from '../../utils/helpers.js';
+import { formatCurrency, getImageUrl, onImageError } from '../../utils/helpers.js';
 import routes from '../../routes/routes.js';
 import './CartPage.css';
 import useAuth from '../../contexts/use-auth.js';
@@ -97,10 +97,7 @@ const CartPage = () => {
                                 thumbnail
                                 className="cart-item-image"
                                 style={{ objectFit: 'cover' }}
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'block';
-                                }}
+                                onError={onImageError}
                             />
                         ) : null}
                         <Badge bg="secondary" style={{ display: item.image ? 'none' : 'block' }}>

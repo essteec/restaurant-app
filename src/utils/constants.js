@@ -1,7 +1,10 @@
 // API Configuration
+const DEV = import.meta.env?.DEV;
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/rest/api',
-  IMAGE_BASE_URL: 'http://localhost:8080',
+  // In dev, default to '/api' so Vite proxy can forward to backend '/rest/api'.
+  // In prod, default to '/rest/api' (served from Spring Boot).
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || (DEV ? '/api' : '/rest/api'),
+  IMAGE_BASE_URL: import.meta.env.VITE_IMAGE_BASE_URL || '/images/',
   TIMEOUT: 10000,
 };
 

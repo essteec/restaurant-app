@@ -263,6 +263,7 @@ const WaiterCallRequestsPage = () => {
                 </div>
                 
                 <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                    { request.active && (
                     <Button
                         variant="success"
                         size="sm"
@@ -275,6 +276,7 @@ const WaiterCallRequestsPage = () => {
                         <i className="bi bi-check-circle me-1"></i>
                         Resolve
                     </Button>
+                    )}
                     {user?.role === 'ADMIN' && (
                         <Button
                             variant="outline-danger"

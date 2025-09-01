@@ -141,13 +141,15 @@ const LandingPage = () => {
                 </Row>
                 <Row className="mt-4">
                     <Col>
-                        <div className="map-container" style={{ height: '400px', width: '100%', borderRadius: '8px', overflow: 'hidden' }}>
+                        <div className="map-container"
+                             style={{height: '400px', width: '100%', borderRadius: '8px', overflow: 'hidden'}}>
                             {/* Google Maps Embed - Placeholder */}
+
                             <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2319.650686701123!2d28.985461812492318!3d41.06430475230557!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14cab755801ac577%3A0xf99c71e1c96b9bbe!2zw4dpZnQgxZ5pxZ8gT2Nha2JhxZ_EsQ!5e0!3m2!1str!2str!4v1754056601799!5m2!1str!2str"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6021.341210480089!2d28.95838192304266!3d41.01058232165296!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14cab98fe9d1fd7d%3A0x55100f150db7b476!2sBaban%C4%B1n%20Yeri%20Restaurant!5e0!3m2!1str!2str!4v1756472672436!5m2!1str!2str"
                                 width="100%"
                                 height="100%"
-                                style={{ border: 0 }}
+                                style={{border: 0}}
                                 allowFullScreen=""
                                 loading="lazy"
                                 referrerPolicy="no-referrer-when-downgrade"

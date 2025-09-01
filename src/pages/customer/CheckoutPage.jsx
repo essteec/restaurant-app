@@ -62,7 +62,7 @@ const CheckoutPage = () => {
     // Redirect if cart is empty
     useEffect(() => {
         if (isEmpty) {
-            navigate(routes.CART);
+            navigate(routes.ORDER_TRACKING);
             return;
         }
     }, [isEmpty, navigate]);
@@ -174,7 +174,7 @@ const CheckoutPage = () => {
         setError('');
         const orderData = {
             orderItems: cartItems.map(item => ({
-                foodName: item.foodName,
+                foodName: item.originalFoodName || item.foodName, // Use original name for backend
                 quantity: item.quantity,
                 note: item.notes || ''
             })),
@@ -193,9 +193,9 @@ const CheckoutPage = () => {
         } catch (error) {
             console.error('Failed to place order:', error);
             setError(error.response?.data?.message || 'Failed to place order. Please try again.');
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-        navigate(routes.ORDER_TRACKING);
     };
 
     if (isEmpty) {
@@ -275,7 +275,7 @@ const CheckoutPage = () => {
                         </Card>
 
                         {/* Table Selection */}
-                        {orderType === 'table' && !(selectedTable && selectedTable.tableNumber) && (
+                        {orderType === 'table' && !isTableFromQr && (
                             <Card className="mb-4">
                                 <Card.Header>
                                     <h5 className="mb-0">Select Table</h5>
@@ -311,8 +311,8 @@ const CheckoutPage = () => {
                                 <Card.Header>
                                     <div className="d-flex justify-content-between align-items-center">
                                         <h5 className="mb-0">Delivery Address</h5>
-                                        <Button 
-                                            variant="outline-primary" 
+                                        <Button
+                                            variant={ addresses.length === 0 ? ("outline-warning") : ("outline-info") }
                                             size="sm"
                                             onClick={handleAddressModalShow}
                                         >
@@ -322,9 +322,18 @@ const CheckoutPage = () => {
                                 </Card.Header>
                                 <Card.Body>
                                     {addresses.length === 0 ? (
-                                        <Alert variant="warning">
-                                            You have no saved addresses. Please add a delivery address.
-                                        </Alert>
+                                        <>
+                                            <Alert variant="warning">
+                                                You have no saved addresses. Please add a delivery address.
+                                            </Alert>
+                                            <Button
+                                                variant={ addresses.length === 0 ? ("outline-warning") : ("outline-info") }
+                                                size="sm"
+                                                onClick={handleAddressModalShow}
+                                            >
+                                                Add New Address
+                                            </Button>
+                                        </>
                                     ) : (
                                         <Form.Group>
                                             <Form.Label>Select Delivery Address</Form.Label>

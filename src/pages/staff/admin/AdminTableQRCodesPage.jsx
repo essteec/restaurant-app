@@ -5,7 +5,7 @@ import apiClient from '../../../api';
 import useAuth from '../../../contexts/use-auth';
 import { useToast } from '../../../hooks/useToast.js';
 import { useConfirmation } from '../../../hooks/useConfirmation.js';
-import { getQrCodeUrl } from '../../../utils/helpers';
+import { getQrCodeUrl, onQrError } from '../../../utils/helpers';
 
 const AdminTableQRCodesPage = () => {
     const [qrCodes, setQrCodes] = useState([]);
@@ -97,13 +97,14 @@ const AdminTableQRCodesPage = () => {
 
         try {
             // GET as blob using apiClient so auth headers are included
-            const response = await apiClient.get(`${getQrCodeUrl(qrCodeFileName)}`, {
-            responseType: 'blob'
+            const response = await apiClient.get(getQrCodeUrl(qrCodeFileName), {
+                responseType: 'blob',
+                baseURL: '' // Override baseURL to prevent prepending /rest/api
             });
 
             // Try derive filename from content-disposition header if present
             const contentDisposition = response.headers?.['content-disposition'] || response.headers?.['Content-Disposition'];
-            let filename = `table_${tableNumber}_qr.jpg`;
+            let filename = `table_${tableNumber}.jpg`;
             if (contentDisposition) {
             const match = /filename\*=UTF-8''([^;]+)|filename=\"?([^\";]+)\"?/.exec(contentDisposition);
             if (match) filename = decodeURIComponent(match[1] || match[2]);
@@ -119,7 +120,7 @@ const AdminTableQRCodesPage = () => {
             link.remove();
             window.URL.revokeObjectURL(url);
 
-            showSuccess(`QR code for table ${tableNumber} downloaded`);
+            showSuccess(`QR code for table ${tableNumber} downloading`);
         } catch (err) {
             console.error('Download QR code error:', err);
             // Provide helpful toast based on likely causes
@@ -345,10 +346,7 @@ const AdminTableQRCodesPage = () => {
                                                         cursor: 'pointer'
                                                     }}
                                                     onClick={() => handleViewFullSize(table.qrCode, table.tableNumber)}
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        e.target.nextSibling.style.display = 'block';
-                                                    }}
+                                                    onError={onQrError}
                                                 />
                                                 <Alert variant="warning" style={{ display: 'none' }} className="mt-2">
                                                     <small>Image not available</small>

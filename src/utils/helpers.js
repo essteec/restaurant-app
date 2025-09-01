@@ -1,5 +1,18 @@
 import { ORDER_STATUS, USER_ROLES } from './constants.js';
 
+// ---- Media helpers: consistent URL building and graceful fallbacks ----
+const isAbsoluteUrl = (url) => /^(https?:)?\/\//i.test(url) || /^data:/i.test(url);
+const stripLeadingSlashes = (s = '') => (s || '').replace(/^\/+/, '');
+const joinUrl = (base, path) => {
+  const b = (base || '').replace(/\/+$/, '');
+  const p = stripLeadingSlashes(path || '');
+  return p ? `${b}/${p}` : b || '/';
+};
+const ensureBase = (envKey, fallbackBase) => {
+  const base = import.meta?.env?.[envKey] || fallbackBase;
+  return base;
+};
+
 /**
  * Format currency value
  */
@@ -157,31 +170,62 @@ export const debounce = (func, wait) => {
  */
 export const getImageUrl = (imageName, fallback = '/images/placeholder.jpg') => {
   if (!imageName) return fallback;
-  // If already an absolute URL, return as-is
-  if (/^https?:\/\//i.test(imageName) || /^data:/i.test(imageName)) return imageName;
+  if (isAbsoluteUrl(imageName)) return imageName;
 
-  const base = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8080/images';
-  const baseHasImages = /\/images\/?$/.test(base);
-  // normalize imageName by removing leading slashes
-  let name = imageName.replace(/^\/+/, '');
-  // if base already contains '/images' and name starts with 'images/', remove the duplicate
-  if (baseHasImages && name.startsWith('images/')) {
-    name = name.replace(/^images\//, '');
+  const base = ensureBase('VITE_IMAGE_BASE_URL', '/images');
+  const baseHasImages = /\/images\/?$/i.test(base);
+  let name = stripLeadingSlashes(imageName);
+  // Prevent double "images/images/..."
+  if (baseHasImages && /^images\//i.test(name)) {
+    name = name.replace(/^images\//i, '');
   }
-  return `${base}/${name}`;
+  return joinUrl(base, name);
 };
 
 export const getQrCodeUrl = (qrCodeName, fallback = '/qr-codes/placeholder.jpg') => {
   if (!qrCodeName) return fallback;
-  if (/^https?:\/\//i.test(qrCodeName) || /^data:/i.test(qrCodeName)) return qrCodeName;
+  if (isAbsoluteUrl(qrCodeName)) return qrCodeName;
 
-  const base = import.meta.env.VITE_QR_BASE_URL || 'http://localhost:8080/qr-codes';
-  const baseHasQr = /\/qr-codes\/?$/.test(base);
-  let name = qrCodeName.replace(/^\/+/, '');
-  if (baseHasQr && name.startsWith('qr-codes/')) {
-    name = name.replace(/^qr-codes\//, '');
+  const base = ensureBase('VITE_QR_BASE_URL', '/qr-codes');
+  const baseHasQr = /\/qr-codes\/?$/i.test(base);
+  let name = stripLeadingSlashes(qrCodeName);
+  if (baseHasQr && /^qr-codes\//i.test(name)) {
+    name = name.replace(/^qr-codes\//i, '');
   }
-  return `${base}/${name}`;
+  return joinUrl(base, name);
+};
+
+/**
+ * onError helpers: swap to a safe fallback exactly once to avoid loops
+ */
+export const onImageError = (e, fallback) => {
+  const img = e?.target;
+  if (!img || img.dataset.fallbackApplied) return;
+  img.dataset.fallbackApplied = '1';
+  img.alt = img.alt || 'Image unavailable';
+  const svg = encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200">\n' +
+    '<rect width="100%" height="100%" fill="#f0f0f0"/>\n' +
+    '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-family="sans-serif" font-size="14">Image not available</text>\n' +
+    '</svg>'
+  );
+  img.src = fallback || `data:image/svg+xml;charset=UTF-8,${svg}`;
+};
+
+export const onQrError = (e, fallback) => {
+  const img = e?.target;
+  if (!img || img.dataset.fallbackApplied) return;
+  img.dataset.fallbackApplied = '1';
+  img.alt = img.alt || 'QR code unavailable';
+  const svg = encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">\n' +
+    '<rect width="100%" height="100%" fill="#ffffff"/>\n' +
+    '<rect x="20" y="20" width="60" height="60" fill="#ddd"/><rect x="220" y="20" width="60" height="60" fill="#ddd"/>\n' +
+    '<rect x="20" y="220" width="60" height="60" fill="#ddd"/><rect x="120" y="120" width="60" height="60" fill="#ddd"/>\n' +
+    '<text x="50%" y="95%" dominant-baseline="middle" text-anchor="middle" fill="#999" font-family="sans-serif" font-size="14">QR not available</text>\n' +
+    '</svg>'
+  );
+  img.src = fallback || `data:image/svg+xml;charset=UTF-8,${svg}`;
 };
 
 /**

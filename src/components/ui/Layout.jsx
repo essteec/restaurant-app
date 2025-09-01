@@ -1,4 +1,4 @@
-import {Container, Navbar, Nav, NavDropdown, Button, Row, Col} from 'react-bootstrap'
+import {Container, Navbar, Nav, NavDropdown, Button, Row, Col, Image} from 'react-bootstrap'
 import {Link, useLocation} from "react-router-dom";
 import { HashLink } from 'react-router-hash-link';
 import routes from "../../routes/routes.js";
@@ -23,7 +23,7 @@ function Layout({ children }) {
             <Navbar bg="dark" variant="dark" expand="xl" className={`shadow ${!isAuthenticated ? 'py-4' : 'py-0'}`}>
                 <Container>
                     <Navbar.Brand as={HashLink} to="/#home" smooth className={`py-4 ${location.hash === '#home' ? 'active' : ''}`}>
-                        <img src="/miniLogo.png" alt="Restaurant Logo" height="40px" className="me-2 rounded-circle" /> My Restaurant
+                        <Image src="/miniLogo.png" alt="Restaurant Logo" height="36px" className="me-2 rounded-circle" /> Babanın Yeri
                     </Navbar.Brand>
 
                     <Navbar.Toggle aria-controls="main-navbar"/>
@@ -67,7 +67,7 @@ function Layout({ children }) {
                                                     <NavDropdown.Item as={Link} to={routes.ADMIN_CALL_REQUESTS}>
                                                         🪑 Call Requests</NavDropdown.Item>
                                                 </NavDropdown>
-                                                <NavDropdown title={"Management"} id="admin-nav-dropdown">
+                                                <NavDropdown title={"Manage"} id="admin-nav-dropdown">
                                                     <NavDropdown.Item as={Link} to={routes.ADMIN_MENUS}>
                                                         📋 Menus</NavDropdown.Item>
                                                     <NavDropdown.Item as={Link} to={routes.ADMIN_FOOD_ITEMS}>
@@ -80,7 +80,7 @@ function Layout({ children }) {
                                             </>
                                         )}
 
-                                        <NavDropdown title={"Operations"} id="staff-nav-dropdown">
+                                        <NavDropdown title={"Operate"} id="staff-nav-dropdown">
                                             {(userRole === 'WAITER' || userRole === 'ADMIN') && (
                                                 <>
                                                     <NavDropdown.Item as={Link} to={routes.WAITER_OPERATIONS}>
@@ -89,7 +89,7 @@ function Layout({ children }) {
                                                     <NavDropdown.Item as={Link} to={routes.WAITER_ORDERS}>
                                                         📋 Orders</NavDropdown.Item>
                                                     <NavDropdown.Item as={Link} to={routes.WAITER_TABLES}>
-                                                        🪑 Table Management</NavDropdown.Item>
+                                                        🪑 Tables</NavDropdown.Item>
                                                     <NavDropdown.Item as={Link} to={routes.WAITER_CALL_REQUESTS}>
                                                         📞 Call Requests</NavDropdown.Item>
                                                 </>

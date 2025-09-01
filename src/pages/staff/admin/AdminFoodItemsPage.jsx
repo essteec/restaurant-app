@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Card, Button, Spinner, Alert, Modal, Form, Badge, ListGroup, Pagination as BSPagination, Image } from 'react-bootstrap';
+import { Container, Card, Button, Spinner, Alert, Modal, Form, Badge, ListGroup, Pagination as BSPagination, Image, Row, Col } from 'react-bootstrap';
 import apiClient from '../../../api';
 import useAuth from '../../../contexts/use-auth';
 import { DataTable } from '../../../components';
 import { useToast } from '../../../hooks/useToast.js';
 import { useConfirmation } from '../../../hooks/useConfirmation.js';
 import { PAGINATION, AVAILABLE_LANGUAGES } from '../../../utils/constants';
-import { getImageUrl } from '../../../utils/helpers';
+import { getImageUrl, onImageError } from '../../../utils/helpers';
 
 const AdminFoodItemsPage = () => {
     const [foodItems, setFoodItems] = useState([]);
@@ -27,6 +27,9 @@ const AdminFoodItemsPage = () => {
     const [categoriesForItem, setCategoriesForItem] = useState([]);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [loadingAiDescription, setLoadingAiDescription] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchInputValue, setSearchInputValue] = useState('');
+
     // Pagination state
     const [pagination, setPagination] = useState({
         page: 0,
@@ -46,7 +49,7 @@ const AdminFoodItemsPage = () => {
             return;
         }
         fetchFoodItems();
-    }, [isAuthenticated, user, pagination.page, pagination.size]);
+    }, [isAuthenticated, user, pagination.page, pagination.size, searchQuery]);
 
     // Cleanup object URLs on unmount
     useEffect(() => {
@@ -66,15 +69,26 @@ const AdminFoodItemsPage = () => {
                 size: pagination.size.toString(),
                 sort: 'foodName,asc'
             });
-            const response = await apiClient.get(`/food-items?${params}`);
+
+            let response;
+
+            if (searchQuery?.trim()) {
+                params.append('query', searchQuery.trim());
+                response = await apiClient.get(`/food-items/search?${params}`);
+            } else {
+                response = await apiClient.get(`/food-items?${params}`);
+            }
+
             // Backend may return PageFoodItemDto { content: [...] }
             const data = response.data;
             const items = Array.isArray(data)
                 ? data
                 : (data.content || []);
-            // Sort alphabetically for consistency
-            items.sort((a, b) => a.foodName.localeCompare(b.foodName));
 
+            // Sort alphabetically for consistency
+            if (!searchQuery?.trim()) {
+                items.sort((a, b) => a.foodName.localeCompare(b.foodName));
+            }
             // Handle empty page
             if (items.length === 0 && pagination.page > 0) {
                 setPagination(prev => ({ ...prev, page: prev.page - 1 }));
@@ -407,6 +421,19 @@ const AdminFoodItemsPage = () => {
         setPagination(prev => ({ ...prev, page: 0, size: newSize }));
     };
 
+    // Search handlers
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        setSearchQuery(searchInputValue);
+        setPagination(prev => ({ ...prev, page: 0 })); // Reset to first page when searching
+    };
+
+    const handleSearchClear = () => {
+        setSearchInputValue('');
+        setSearchQuery('');
+        setPagination(prev => ({ ...prev, page: 0 })); // Reset to first page when clearing
+    };
+
     // DataTable columns configuration
     const columns = [
         {
@@ -422,10 +449,7 @@ const AdminFoodItemsPage = () => {
                         style={{ width: '48px', height: '48px', objectFit: 'cover',
                             transition: 'transform 0.2s ease-in-out', cursor: 'pointer' }}
                         className="hover-zoom"
-                        onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'block';
-                        }}
+                        onError={(e) => onImageError(e)}
                         onMouseEnter={(e) => {
                             e.target.style.transform = 'scale(3)';
                             e.target.style.transformOrigin = 'left center';
@@ -529,6 +553,10 @@ const AdminFoodItemsPage = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1>Food Item Management</h1>
                 <div className="d-flex gap-2">
+                    <Button variant="outline-secondary" onClick={() => window.location.href = '/admin/translations'}>
+                        <i className="bi bi-translate me-2"></i>
+                        Translations
+                    </Button>
                     <Button variant="primary" onClick={handleAddFoodItemClick}>
                         <i className="bi bi-plus-circle me-2"></i>
                         Add New Food Item
@@ -536,24 +564,80 @@ const AdminFoodItemsPage = () => {
                 </div>
             </div>
 
+            {/* Search Bar */}
+            <Card className='mb-4'>
+                <Card.Body>
+                    <Form onSubmit={handleSearchSubmit}>
+                        <Row className="align-items-end">
+                            <Col md={4} lg={5}>
+                                <Form.Group>
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="Search by food name or description..."
+                                        value={searchInputValue}
+                                        onChange={(e) => setSearchInputValue(e.target.value)}
+                                    />
+                                </Form.Group>
+                            </Col>
+                            <Col md={3} lg={4}>
+                                <div className="d-flex gap-2">
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        disabled={loading}
+                                    >
+                                        <i className="bi bi-search me-1"></i>
+                                        Search
+                                    </Button>
+                                    {searchQuery && (
+                                        <Button
+                                            variant="outline-secondary"
+                                            onClick={handleSearchClear}
+                                            disabled={loading}
+                                            title="Clear search"
+                                        >
+                                            <i className="bi bi-x-circle"></i>
+                                        </Button>
+                                    )}
+                                    <small className="text-muted align-self-center ms-1">
+                                        <span> ({pagination.totalElements} result{pagination.totalElements !== 1 ? 's' : ''})</span>
+                                    </small>
+                                </div>
+                            </Col>
+                        </Row>
+                    </Form>
+                </Card.Body>
+            </Card>
+
             {foodItems.length === 0 ? (
-                <Card>
-                    <Card.Body className="text-center">
-                        <p className="text-muted">No food items found. Create your first food item to get started.</p>
-                        <Button variant="primary" onClick={handleAddFoodItemClick}>
-                            Create First Food Item
-                        </Button>
-                    </Card.Body>
-                </Card>
+                searchQuery ? (
+                    <Card>
+                        <Card.Body className="text-center">
+                            <p className="text-muted">No foods found matching your search. Try a different search term</p>
+                            <Button variant="primary" onClick={handleSearchClear}>
+                                Clear Search
+                            </Button>
+                        </Card.Body>
+                    </Card>
+                ) : (
+                    <Card>
+                        <Card.Body className="text-center">
+                            <p className="text-muted">No food items found. Create your first food item to get started.</p>
+                            <Button variant="primary" onClick={handleAddFoodItemClick}>
+                                Create First Food Item
+                            </Button>
+                        </Card.Body>
+                    </Card>
+                )
             ) : (
                 <DataTable
                     data={foodItems}
                     columns={columns}
                     loading={loading}
-                    searchable={true}
+                    searchable={false}
                     sortable={true}
                     paginated={false}
-                    emptyMessage="No food items found"
+                    emptyMessage={searchQuery ? `No foods found matching "${searchQuery}"` : "No foods found"}
                 />
             )}
 
@@ -678,14 +762,8 @@ const AdminFoodItemsPage = () => {
                                                 alt="Current food item" 
                                                 thumbnail 
                                                 style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }}
-                                                onError={(e) => {
-                                                    e.target.style.display = 'none';
-                                                    e.target.nextSibling.style.display = 'block';
-                                                }}
+                                                onError={onImageError}
                                             />
-                                            <Badge bg="secondary" style={{ display: 'none' }}>
-                                                Image not available
-                                            </Badge>
                                         </div>
                                     )}
                                     {/* Show preview of selected new image */}
@@ -762,15 +840,8 @@ const AdminFoodItemsPage = () => {
                                             fluid 
                                             rounded
                                             style={{ maxWidth: '300px', maxHeight: '300px', objectFit: 'cover' }}
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                                e.target.nextSibling.style.display = 'block';
-                                            }}
+                                            onError={onImageError}
                                         />
-                                        <Alert variant="warning" style={{ display: 'none' }} className="mt-2">
-                                            <i className="bi bi-exclamation-triangle me-2"></i>
-                                            Image could not be loaded: {selectedItemContent.image}
-                                        </Alert>
                                     </div>
                                     <div className="d-flex align-items-center gap-2">
                                         <Badge bg="secondary">{selectedItemContent.image}</Badge>

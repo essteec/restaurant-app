@@ -8,6 +8,14 @@ import QuickActions from './components/QuickActions.jsx';
 import { LoadingSpinner, DataTable } from '../../components/index.js';
 import { useToast } from '../../hooks/useToast.js';
 import { formatCurrency } from '../../utils/helpers.js';
+import { 
+    RevenueChart, 
+    TopItemsChart, 
+    TopCategoriesChart, 
+    RevenueHeatmap, 
+    BusiestTablesChart,
+    DashboardStats
+} from '../../components/charts/index.js';
 
 const AdminDashboard = () => {
     const { user, isAuthenticated } = useAuth();
@@ -356,122 +364,6 @@ const AdminDashboard = () => {
         showToast('Dashboard refreshed successfully', 'success');
     };
 
-    // Enhanced DataTable columns for analytics
-    const topItemsColumns = [
-        {
-            key: 'rank',
-            header: 'Rank',
-            render: (value, item, index) => (
-                <Badge bg={index < 3 ? 'warning' : 'secondary'} className="fs-6">
-                    #{index + 1}
-                </Badge>
-            )
-        },
-        {
-            key: 'foodName',
-            header: 'Food Item',
-            accessor: 'foodName',
-            sortable: true,
-            render: (value) => (
-                <div>
-                    <strong>{value}</strong>
-                </div>
-            )
-        },
-        {
-            key: 'quantitySold',
-            header: 'Qty Sold',
-            accessor: 'quantitySold',
-            sortable: true,
-            render: (value) => (
-                <Badge bg="info" className="fs-6">
-                    {value} units
-                </Badge>
-            )
-        },
-        {
-            key: 'totalRevenue',
-            header: 'Revenue',
-            accessor: 'totalRevenue',
-            sortable: true,
-            render: (value) => (
-                <strong className="text-success">
-                    {formatCurrency(value)}
-                </strong>
-            )
-        }
-    ];
-
-    const topCategoriesColumns = [
-        {
-            key: 'rank',
-            header: 'Rank',
-            render: (value, item, index) => (
-                <Badge bg={index < 3 ? 'success' : 'secondary'} className="fs-6">
-                    #{index + 1}
-                </Badge>
-            )
-        },
-        {
-            key: 'categoryName',
-            header: 'Category',
-            accessor: 'categoryName',
-            sortable: true,
-            render: (value) => (
-                <div>
-                    <i className="bi bi-tag me-2"></i>
-                    <strong>{value}</strong>
-                </div>
-            )
-        },
-        {
-            key: 'totalRevenue',
-            header: 'Total Revenue',
-            accessor: 'totalRevenue',
-            sortable: true,
-            render: (value) => (
-                <strong className="text-success">
-                    {formatCurrency(value)}
-                </strong>
-            )
-        }
-    ];
-
-    const busiestTablesColumns = [
-        {
-            key: 'rank',
-            header: 'Rank',
-            render: (value, item, index) => (
-                <Badge bg={index < 3 ? 'primary' : 'secondary'} className="fs-6">
-                    #{index + 1}
-                </Badge>
-            )
-        },
-        {
-            key: 'tableNumber',
-            header: 'Table',
-            accessor: 'tableNumber',
-            sortable: true,
-            render: (value) => (
-                <div>
-                    <i className="bi bi-table me-2"></i>
-                    <strong>{value}</strong>
-                </div>
-            )
-        },
-        {
-            key: 'orderCount',
-            header: 'Orders',
-            accessor: 'orderCount',
-            sortable: true,
-            render: (value) => (
-                <Badge bg="warning" className="fs-6">
-                    {value} orders
-                </Badge>
-            )
-        }
-    ];
-
     if (!isAuthenticated || user?.role !== 'ADMIN') {
         return (
             <Container className="mt-4">
@@ -630,242 +522,59 @@ const AdminDashboard = () => {
                             ) : (
                                 <>
                                     {/* Enhanced Dashboard Statistics Cards */}
-                                    <Row className="mb-4">
-                                        <Col md={3}>
-                                            <Card className="text-center border-primary shadow-sm h-100">
-                                                <Card.Body>
-                                                    <div className="display-6 text-primary mb-2">
-                                                        <i className="bi bi-currency-dollar"></i>
-                                                    </div>
-                                                    <h3 className="text-primary">{formatCurrency(dashboardStats.totalRevenue || 0)}</h3>
-                                                    <p className="text-muted mb-0">Total Revenue</p>
-                                                    <small className="text-muted">Gross sales income</small>
-                                                </Card.Body>
-                                            </Card>
-                                        </Col>
-                                        <Col md={3}>
-                                            <Card className="text-center border-success shadow-sm h-100">
-                                                <Card.Body>
-                                                    <div className="display-6 text-success mb-2">
-                                                        <i className="bi bi-receipt"></i>
-                                                    </div>
-                                                    <h3 className="text-success">{dashboardStats.totalOrders || 0}</h3>
-                                                    <p className="text-muted mb-0">Total Orders</p>
-                                                    <small className="text-muted">Completed transactions</small>
-                                                </Card.Body>
-                                            </Card>
-                                        </Col>
-                                        <Col md={3}>
-                                            <Card className="text-center border-info shadow-sm h-100">
-                                                <Card.Body>
-                                                    <div className="display-6 text-info mb-2">
-                                                        <i className="bi bi-graph-up-arrow"></i>
-                                                    </div>
-                                                    <h3 className="text-info">{formatCurrency(dashboardStats.averageOrderValue || 0)}</h3>
-                                                    <p className="text-muted mb-0">Average Order Value</p>
-                                                    <small className="text-muted">Revenue per order</small>
-                                                </Card.Body>
-                                            </Card>
-                                        </Col>
-                                        <Col md={3}>
-                                            <Card className="text-center border-warning shadow-sm h-100">
-                                                <Card.Body>
-                                                    <div className="display-6 text-warning mb-2">
-                                                        <i className="bi bi-person-plus"></i>
-                                                    </div>
-                                                    <h3 className="text-warning">{dashboardStats.newCustomers || 0}</h3>
-                                                    <p className="text-muted mb-0">New Customers</p>
-                                                    <small className="text-muted">Customer acquisition</small>
-                                                </Card.Body>
-                                            </Card>
-                                        </Col>
-                                    </Row>
+                                    <DashboardStats 
+                                        stats={dashboardStats} 
+                                        loading={analyticsLoading} 
+                                    />
 
                                     {/* Revenue Over Time Chart */}
-                                    {Array.isArray(revenueChart) && revenueChart.length > 0 && (
-                                        <Row className="mb-4">
-                                            <Col md={12}>
-                                                <Card className="shadow-sm">
-                                                    <Card.Header className="bg-gradient-primary text-white">
-                                                        <h5 className="mb-0">
-                                                            <i className="bi bi-graph-up me-2"></i>
-                                                            Revenue Trend Analysis
-                                                        </h5>
-                                                    </Card.Header>
-                                                    <Card.Body>
-                                                        <div className="table-responsive">
-                                                            <table className="table table-hover">
-                                                                <thead className="table-dark">
-                                                                <tr>
-                                                                    <th>
-                                                                        <i className="bi bi-calendar3 me-2"></i>
-                                                                        Period
-                                                                    </th>
-                                                                    <th>
-                                                                        <i className="bi bi-currency-dollar me-2"></i>
-                                                                        Revenue
-                                                                    </th>
-                                                                </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                {revenueChart.map((point, index) => (
-                                                                    <tr key={index}>
-                                                                        <td>
-                                                                            <Badge bg="secondary">{point.label}</Badge>
-                                                                        </td>
-                                                                        <td>
-                                                                            <strong className="text-success">
-                                                                                {formatCurrency(point.revenue)}
-                                                                            </strong>
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </Card.Body>
-                                                </Card>
-                                            </Col>
-                                        </Row>
-                                    )}
+                                    <Row className="mb-4">
+                                        <Col md={12}>
+                                            <RevenueChart 
+                                                data={revenueChart} 
+                                                loading={analyticsLoading}
+                                                title="Revenue Over Time"
+                                            />
+                                        </Col>
+                                    </Row>
 
                                     {/* Enhanced Performance Analytics */}
                                     <Row className="mb-4">
                                         <Col md={4}>
-                                            <Card className="shadow-sm h-100">
-                                                <Card.Header className="bg-success text-white">
-                                                    <h6 className="mb-0">
-                                                        <i className="bi bi-trophy me-2"></i>
-                                                        Top Performing Items
-                                                    </h6>
-                                                </Card.Header>
-                                                <Card.Body>
-                                                    <DataTable
-                                                        data={Array.isArray(topItems) ? topItems : []}
-                                                        columns={topItemsColumns}
-                                                        loading={false}
-                                                        searchable={false}
-                                                        paginated={false}
-                                                        emptyMessage="No sales data available for this period"
-                                                        striped={true}
-                                                        hover={true}
-                                                    />
-                                                </Card.Body>
-                                            </Card>
+                                            <TopItemsChart 
+                                                data={topItems} 
+                                                loading={analyticsLoading}
+                                                title="Top Performing Items"
+                                            />
                                         </Col>
 
                                         <Col md={4}>
-                                            <Card className="shadow-sm h-100">
-                                                <Card.Header className="bg-info text-white">
-                                                    <h6 className="mb-0">
-                                                        <i className="bi bi-tags me-2"></i>
-                                                        Top Categories
-                                                    </h6>
-                                                </Card.Header>
-                                                <Card.Body>
-                                                    <DataTable
-                                                        data={Array.isArray(topCategories) ? topCategories : []}
-                                                        columns={topCategoriesColumns}
-                                                        loading={false}
-                                                        searchable={false}
-                                                        paginated={false}
-                                                        emptyMessage="No category data available for this period"
-                                                        striped={true}
-                                                        hover={true}
-                                                    />
-                                                </Card.Body>
-                                            </Card>
+                                            <TopCategoriesChart 
+                                                data={topCategories} 
+                                                loading={analyticsLoading}
+                                                title="Top Performing Categories"
+                                            />
                                         </Col>
 
                                         <Col md={4}>
-                                            <Card className="shadow-sm h-100">
-                                                <Card.Header className="bg-warning text-dark">
-                                                    <h6 className="mb-0">
-                                                        <i className="bi bi-building me-2"></i>
-                                                        Busiest Tables
-                                                    </h6>
-                                                </Card.Header>
-                                                <Card.Body>
-                                                    <DataTable
-                                                        data={Array.isArray(busiestTables) ? busiestTables : []}
-                                                        columns={busiestTablesColumns}
-                                                        loading={false}
-                                                        searchable={false}
-                                                        paginated={false}
-                                                        emptyMessage="No table data available for this period"
-                                                        striped={true}
-                                                        hover={true}
-                                                    />
-                                                </Card.Body>
-                                            </Card>
+                                            <BusiestTablesChart 
+                                                data={busiestTables} 
+                                                loading={analyticsLoading}
+                                                title="Busiest Tables"
+                                            />
                                         </Col>
                                     </Row>
 
                                     {/* Revenue Heatmap Analysis */}
-                                    {Array.isArray(revenueHeatmap) && revenueHeatmap.length > 0 && (
-                                        <Row className="mb-4">
-                                            <Col md={12}>
-                                                <Card className="shadow-sm">
-                                                    <Card.Header className="bg-dark text-white">
-                                                        <h5 className="mb-0">
-                                                            <i className="bi bi-heat-map me-2"></i>
-                                                            Revenue Heatmap (Peak Hours Analysis)
-                                                        </h5>
-                                                    </Card.Header>
-                                                    <Card.Body>
-                                                        <div className="table-responsive">
-                                                            <table className="table table-hover">
-                                                                <thead className="table-dark">
-                                                                <tr>
-                                                                    <th>
-                                                                        <i className="bi bi-calendar-week me-2"></i>
-                                                                        Day of Week
-                                                                    </th>
-                                                                    <th>
-                                                                        <i className="bi bi-clock me-2"></i>
-                                                                        Hour
-                                                                    </th>
-                                                                    <th>
-                                                                        <i className="bi bi-currency-dollar me-2"></i>
-                                                                        Revenue
-                                                                    </th>
-                                                                </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                {revenueHeatmap.slice(0, 20).map((point, index) => (
-                                                                    <tr key={index}>
-                                                                        <td>
-                                                                            <Badge bg="secondary" className="fs-6">
-                                                                                {point.dayOfWeek}
-                                                                            </Badge>
-                                                                        </td>
-                                                                        <td>
-                                                                            <Badge bg="primary" className="fs-6">
-                                                                                {point.hourOfDay}:00
-                                                                            </Badge>
-                                                                        </td>
-                                                                        <td>
-                                                                            <strong className="text-success">
-                                                                                {formatCurrency(point.revenue)}
-                                                                            </strong>
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                        {revenueHeatmap.length > 20 && (
-                                                            <div className="text-center mt-3">
-                                                                <Badge bg="info" className="fs-6">
-                                                                    Showing top 20 of {revenueHeatmap.length} time periods
-                                                                </Badge>
-                                                            </div>
-                                                        )}
-                                                    </Card.Body>
-                                                </Card>
-                                            </Col>
-                                        </Row>
-                                    )}
+                                    <Row className="mb-4">
+                                        <Col md={12}>
+                                            <RevenueHeatmap 
+                                                data={revenueHeatmap} 
+                                                loading={analyticsLoading}
+                                                title="Revenue Heatmap - Peak Hours Analysis"
+                                            />
+                                        </Col>
+                                    </Row>
                                 </>
                             )}
                         </Card.Body>
