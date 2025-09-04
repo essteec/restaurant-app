@@ -6,7 +6,7 @@ const DashboardStats = ({ stats = {}, loading = false }) => {
         {
             title: 'Total Revenue',
             value: stats.totalRevenue || '0.00',
-            icon: 'bi bi-currency-dollar',
+            icon: 'bi bi-cash',
             color: 'success',
             prefix: '$',
             suffix: '',

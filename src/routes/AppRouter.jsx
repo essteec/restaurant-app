@@ -27,6 +27,7 @@ import WaiterCallRequestsPage from "../pages/staff/waiter/WaiterCallRequestsPage
 import WaiterOperationPage from "../pages/staff/waiter/WaiterOperationPage.jsx";
 import OrdersViewPage from "@pages/staff/OrdersViewPage.jsx";
 import StaffOrdersPage from "@pages/staff/StaffOrdersPage.jsx";
+import LandingPage from "@pages/public/LandingPage.jsx";
 
 
 const AppRouter = () => {
@@ -78,6 +79,7 @@ const AppRouter = () => {
                     {/*Public routes*/}
                     <Route path={routes.HOME} element={<HomePage/>} />
                     <Route path={routes.MENU} element={<MenuPage/>} />
+                    <Route path={routes.LANDING} element={<LandingPage/>} />
                     <Route path={routes.LOGIN} element={<LoginPage/>} />
                     <Route path={routes.REGISTER} element={<RegisterPage/>} />
                     <Route path={routes.CART} element={<CartPage/>} />

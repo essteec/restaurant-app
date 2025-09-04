@@ -4,7 +4,8 @@ import { HashLink } from 'react-router-hash-link';
 import routes from "../../routes/routes.js";
 import useAuth from "../../contexts/use-auth.js";
 
-import { FaShoppingCart, FaFacebook, FaTwitter, FaInstagram } from 'react-icons/fa';
+import { FaShoppingCart, FaFacebook, FaInstagram } from 'react-icons/fa';
+import { FaXTwitter } from "react-icons/fa6";
 
 import {useCart} from "../../contexts/use-cart.js";
 
@@ -22,7 +23,7 @@ function Layout({ children }) {
         <div className="d-flex flex-column min-vh-100">
             <Navbar bg="dark" variant="dark" expand="xl" className={`shadow ${!isAuthenticated ? 'py-4' : 'py-0'}`}>
                 <Container>
-                    <Navbar.Brand as={HashLink} to="/#home" smooth className={`py-4 ${location.hash === '#home' ? 'active' : ''}`}>
+                    <Navbar.Brand as={HashLink} to={routes.LANDING} smooth className={`py-4 ${location.hash === '#home' ? 'active' : ''}`}>
                         <Image src="/miniLogo.png" alt="Restaurant Logo" height="36px" className="me-2 rounded-circle" /> Babanın Yeri
                     </Navbar.Brand>
 
@@ -122,7 +123,7 @@ function Layout({ children }) {
                             )}
                             <div className="d-flex align-items-center me-3">
                                 <Nav.Link href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer" className="text-white"><FaFacebook size={16} /></Nav.Link>
-                                <Nav.Link href="https://www.twitter.com/" target="_blank" rel="noopener noreferrer" className="text-white ms-2"><FaTwitter size={16} /></Nav.Link>
+                                <Nav.Link href="https://www.twitter.com/" target="_blank" rel="noopener noreferrer" className="text-white ms-2"><FaXTwitter size={16} /></Nav.Link>
                                 <Nav.Link href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className="text-white ms-2"><FaInstagram size={16} /></Nav.Link>
                             </div>
 
@@ -177,7 +178,7 @@ function Layout({ children }) {
                             <h5>Follow Us</h5>
                             <Nav className="flex-row">
                                 <Nav.Link href="#" className="text-white me-3"><FaFacebook size={24} /></Nav.Link>
-                                <Nav.Link href="#" className="text-white me-3"><FaTwitter size={24} /></Nav.Link>
+                                <Nav.Link href="#" className="text-white me-3"><FaXTwitter size={24} /></Nav.Link>
                                 <Nav.Link href="#" className="text-white"><FaInstagram size={24} /></Nav.Link>
                             </Nav>
                         </Col>

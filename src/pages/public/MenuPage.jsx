@@ -19,6 +19,9 @@ const MenuPage = () => {
     const [searchParams] = useSearchParams();
     const { addItem, selectTable, selectedTable } = useCart();
     const [activeTab, setActiveTab] = useState('');
+    const [popularFoods, setPopularFoods] = useState([]);
+    const [showAllPopular, setShowAllPopular] = useState(false);
+    const [popularLoading, setPopularLoading] = useState(true);
 
     useEffect(() => {
         // Fetch supported languages on component mount
@@ -48,6 +51,44 @@ const MenuPage = () => {
 
         fetchSupportedLanguages();
     }, []);
+
+    useEffect(() => {
+        // Fetch popular foods and respect selected language for consistency
+        const fetchPopularFoods = async () => {
+            try {
+                setPopularLoading(true);
+                console.log('Fetching popular foods...');
+                const response = await publicApiClient.get('/food-items/most-popular', {
+                    headers: { 'Accept-Language': selectedLanguage }
+                });
+                console.log('Popular foods response:', response.data);
+                
+                if (response.data && Array.isArray(response.data)) {
+                    // Transform to match the food item structure used elsewhere
+                    const transformedFoods = response.data.map(food => ({
+                        id: food.foodName, // Use foodName as ID since it's unique
+                        foodId: food.foodName,
+                        foodName: food.foodName,
+                        originalFoodName: food.foodName,
+                        price: food.price,
+                        image: food.image,
+                        description: food.description
+                    }));
+                    setPopularFoods(transformedFoods);
+                } else {
+                    console.warn('Unexpected popular foods response format:', response.data);
+                    setPopularFoods([]);
+                }
+            } catch (err) {
+                console.error('Failed to fetch popular foods:', err);
+                setPopularFoods([]);
+            } finally {
+                setPopularLoading(false);
+            }
+        };
+
+        fetchPopularFoods();
+    }, [selectedLanguage]);
     
     useEffect(() => {
         let isMounted = true;
@@ -141,8 +182,11 @@ const MenuPage = () => {
         return languageNames[langCode] || langCode.toUpperCase();
     };
 
-    const handleAddToCart = (item) => { 
+    const handleAddToCart = (item, e) => { 
         try {
+            // Prevent default behavior in case this is inside a form or has accidental submit
+            if (e?.preventDefault) e.preventDefault();
+            if (e?.stopPropagation) e.stopPropagation();
             addItem({
                 id: item.foodId || item.id,
                 foodName: item.foodName,
@@ -153,7 +197,7 @@ const MenuPage = () => {
             });
             
             // Show success message
-            setSuccessMessage(`${item.foodName} added to cart!`);
+            // setSuccessMessage(`${item.foodName} added to cart!`);
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
             console.error('Error adding item to cart:', err);
@@ -204,7 +248,7 @@ const MenuPage = () => {
                     <div className="food-actions mt-auto pt-3">
                         <Button 
                             variant="primary" 
-                            onClick={() => handleAddToCart(item)}
+                            onClick={(e) => handleAddToCart(item, e)}
                             className="add-to-cart-btn w-100"
                             size="sm"
                             type="button"
@@ -217,13 +261,15 @@ const MenuPage = () => {
         );
     };
 
-    if (loading || languagesLoading) {
+    if (loading || languagesLoading || popularLoading) {
         return (
             <Container className="menu-loading-container">
                 <div className="text-center py-5">
                     <LoadingSpinner size="lg" />
                     <h4 className="mt-3 text-muted">
-                        {languagesLoading ? 'Loading languages...' : 'Loading our delicious menu...'}
+                        {languagesLoading ? 'Loading languages...' : 
+                         popularLoading ? 'Loading popular dishes...' : 
+                         'Loading our delicious menu...'}
                     </h4>
                     <p className="text-muted">Please wait while we fetch the latest dishes</p>
                 </div>
@@ -332,6 +378,51 @@ const MenuPage = () => {
                     >
                         ✅ {successMessage}
                     </Alert>
+                )}
+
+                {/* Popular Foods Section */}
+                {popularFoods.length > 0 && (
+                    <div className="popular-foods-section mb-5">
+                        <div className="text-center mb-4">
+                            <h2 className="h3 text-primary mb-2"><i className="bi bi-star"></i> Most Popular Dishes</h2>
+                            <p className="text-muted">Customer favorites that keep them coming back!</p>
+                        </div>
+                        
+                        <Row xs={1} sm={2} lg={3} xl={4} className="g-4 mb-3">
+                            {popularFoods
+                                .slice(0, showAllPopular ? popularFoods.length : 4)
+                                .map(item => (
+                                    <Col key={item.id}>
+                                        <FoodCard item={item} />
+                                    </Col>
+                                ))
+                            }
+                        </Row>
+                        
+                        {popularFoods.length > 4 && (
+                            <div className="text-center">
+                                <Button 
+                                    variant="outline-primary" 
+                                    onClick={() => setShowAllPopular(!showAllPopular)}
+                                    className="px-4"
+                                >
+                                    {showAllPopular ? (
+                                        <>
+                                            <i className="bi bi-chevron-up me-2"></i>
+                                            Show Less
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="bi bi-chevron-down me-2"></i>
+                                            Show More Popular Dishes ({popularFoods.length - 4} more)
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        )}
+                        
+                        <hr className="my-5" />
+                    </div>
                 )}
 
                 <Tabs

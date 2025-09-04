@@ -75,7 +75,7 @@ const AdminMenuPage = () => {
 
     const fetchAllFoodItems = async () => {
         try {
-            const response = await apiClient.get('/food-items');
+            const response = await apiClient.get('/food-items?size=1000');
             return response.data?.content || response.data || [];
         } catch (err) {
             showError('Failed to fetch food items');
@@ -488,6 +488,19 @@ const AdminMenuPage = () => {
                 </div>
             </div>
 
+
+            {/* Alert If there is no menu named 'Featured' or if there is no items in 'Featured' menu */}
+            {!menus.find(menu => menu.menuName === 'Featured') ? (
+                <Alert variant="warning" className="text-center">
+                    You should add a menu named 'Featured'! <br />
+                    This menu will be used to showcase relevant foods for Customers.
+                </Alert>
+            ) : menus.find(menu => menu.menuName === 'Featured').foodItems.length < 6 ? (
+                <Alert variant="info" className="text-center">
+                    You should add at least 6 foods to the 'Featured' menu! It is advisable to have at least 10 items in 'Featured' menu.
+                </Alert>
+            ) : null}
+
             {menus.length === 0 ? (
                 <Card>
                     <Card.Body className="text-center">
@@ -655,34 +668,42 @@ const AdminMenuPage = () => {
                     ) : (
                         <Row>
                             <Col md={6}>
-                                <h6>Available Food Items</h6>
+                                <h6>Available Food Items ({availableFoodItems.length - menuFoodItems.length})</h6>
                                 <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                                     <ListGroup>
                                         {availableFoodItems
                                             .filter(item => !menuFoodItems.find(menuItem => menuItem.foodName === item.foodName))
-                                            .map((item, index) => (
-                                            <ListGroup.Item 
-                                                key={index} 
-                                                className="d-flex justify-content-between align-items-center"
-                                            >
-                                                <div>
-                                                    <strong>{item.foodName}</strong>
-                                                    {item.description && (
-                                                        <div className="text-muted small">{item.description}</div>
-                                                    )}
-                                                    <Badge bg="primary" className="me-1">
-                                                        ${item.price?.toFixed(2) || '0.00'}
-                                                    </Badge>
-                                                </div>
-                                                <Button
-                                                    variant="outline-success"
-                                                    size="sm"
-                                                    onClick={() => handleAddFoodItemToMenu(item)}
+                                            .map((item, index) => {
+                                                const wasInOriginal = originalMenuFoodItems.find(original => original.foodName === item.foodName);
+                                                const isNewlyRemoved = wasInOriginal && !menuFoodItems.find(menuItem => menuItem.foodName === item.foodName);
+
+                                                return (
+                                                <ListGroup.Item 
+                                                    variant='secondary'
+                                                    key={index} 
+                                                    className={`d-flex justify-content-between align-items-center ${isNewlyRemoved ? 'border border-danger' : ''}`}
                                                 >
-                                                    <i className="bi bi-plus"></i> Add
-                                                </Button>
-                                            </ListGroup.Item>
-                                        ))}
+                                                    <div>
+                                                        <strong>{item.foodName}</strong>
+                                                        {isNewlyRemoved && (<Badge bg="danger" className="ms-2 small">Removed</Badge>
+                                                        )}
+                                                        {item.description && (
+                                                            <div className="text-muted small">{item.description}</div>
+                                                        )}
+                                                        <Badge bg="primary" className="me-1">
+                                                            ${item.price?.toFixed(2) || '0.00'}
+                                                        </Badge>
+                                                    </div>
+                                                    <Button
+                                                        variant={`outline-${isNewlyRemoved ? 'danger' : 'success'}`}
+                                                        size="sm"
+                                                        onClick={() => handleAddFoodItemToMenu(item)}
+                                                    >
+                                                        <i className="bi bi-plus"></i> Add
+                                                    </Button>
+                                                </ListGroup.Item>
+                                            );
+                                        })}
                                     </ListGroup>
                                     {availableFoodItems.filter(item => !menuFoodItems.find(menuItem => menuItem.foodName === item.foodName)).length === 0 && (
                                         <Alert variant="info">All available food items are already in this menu.</Alert>
@@ -700,7 +721,7 @@ const AdminMenuPage = () => {
                                             return (
                                                 <ListGroup.Item 
                                                     key={index} 
-                                                    className={`d-flex justify-content-between align-items-center ${isNewlyAdded ? 'bg-light border-success' : ''}`}
+                                                    className={`d-flex justify-content-between align-items-center ${isNewlyAdded ? 'bg-light border border-success' : ''}`}
                                                 >
                                                     <div>
                                                         <strong>{item.foodName}</strong>
@@ -715,7 +736,7 @@ const AdminMenuPage = () => {
                                                         </Badge>
                                                     </div>
                                                     <Button
-                                                        variant="outline-danger"
+                                                        variant={`outline-${isNewlyAdded ? 'success' : 'danger'}`}
                                                         size="sm"
                                                         onClick={() => handleRemoveFoodItemFromMenu(item)}
                                                     >

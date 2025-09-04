@@ -403,7 +403,7 @@ const AdminDashboard = () => {
                                             <i className="bi bi-calendar3 me-2"></i>
                                             Time Period Analysis
                                         </h5>
-                                        <Badge bg="primary" className="fs-6 px-3 py-2">
+                                        <Badge bg="secondary" className="fs-6 px-3 py-2">
                                             <i className={`${datePresets.find(p => p.key === selectedPreset)?.icon} me-2`}></i>
                                             {datePresets.find(p => p.key === selectedPreset)?.label}
                                         </Badge>

@@ -1,6 +1,7 @@
 const routes = {
 	// Public routes
 	HOME: '/',
+    LANDING: '/landing',
 	LOGIN: '/login',
 	REGISTER: '/register',
 	MENU: '/menu',

@@ -1,8 +1,49 @@
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import routes from '../../routes/routes.js';
+import { publicApiClient } from '../../api/index.js';
+import { API_CONFIG } from '../../utils/constants.js';
 
 const LandingPage = () => {
+    const [featuredFoodItems, setFeaturedFoodItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        
+        const fetchLandingPageFoodItems = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await publicApiClient.get('/food-items/landing');
+                setFeaturedFoodItems(response.data || []);
+            } catch (err) {
+                error('Failed to fetch landing page food items:', err);
+                setError('Failed to load featured dishes. Please try again later.');
+                // Fallback to empty array so the rest of the page still renders
+                setFeaturedFoodItems([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLandingPageFoodItems();
+    }, []);
+        
+    const getImageUrl = (imageName) => {
+        if (!imageName) {
+            // Fallback image URL for items without images
+            return 'https://via.placeholder.com/300x200?text=No+Image+Available';
+        }
+        return `${API_CONFIG.IMAGE_BASE_URL}${imageName}`;
+    };
+
+    const formatPrice = (price) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(price);
+    };
     return (
         <Container className="mt-4">
             {/* Hero Section */}
@@ -36,35 +77,52 @@ const LandingPage = () => {
             {/* Menu Highlights Section */}
             <section id="menu-highlights" className="menu-highlights-section py-5 mb-5">
                 <h2 className="text-center mb-5 display-5 fw-bold">Our Signature Dishes</h2>
-                <Row xs={1} md={2} lg={3} className="g-4">
-                    <Col>
-                        <Card className="h-100 shadow-sm">
-                            <Card.Img variant="top" src="https://www.meatburgergurme.com/wp-content/uploads/2023/10/Classic-Burger-0078-scaled.jpg" alt="Gourmet Burger" />
-                            <Card.Body className="text-center">
-                                <Card.Title className="fw-bold">The Classic Gourmet Burger</Card.Title>
-                                <Card.Text>Juicy patty, melted cheddar, fresh veggies, and our secret sauce on a toasted brioche bun. A timeless favorite!</Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                    <Col>
-                        <Card className="h-100 shadow-sm">
-                            <Card.Img variant="top" src="https://mojo.generalmills.c../../api/public/content/iEkDsPG26UKrIPjGfk5e0w_webp_base.webp?v=d798beef&t=191ddcab8d1c415fa10fa00a14351227" alt="Pasta Dish" />
-                            <Card.Body className="text-center">
-                                <Card.Title className="fw-bold">Creamy Tuscan Pasta</Card.Title>
-                                <Card.Text>Al dente pasta tossed in a rich sun-dried tomato cream sauce with spinach and grilled chicken.</Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                    <Col>
-                        <Card className="h-100 shadow-sm">
-                            <Card.Img variant="top" src="https://handletheheat.com/wp-content/uploads/2018/01/Chocolate-Lava-Cakes-SQUARE.png" alt="Dessert" />
-                            <Card.Body className="text-center">
-                                <Card.Title className="fw-bold">Decadent Chocolate Lava Cake</Card.Title>
-                                <Card.Text>Warm, gooey chocolate cake with a molten center, served with a scoop of vanilla bean ice cream.</Card.Text>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                </Row>
+                
+                {loading && (
+                    <div className="text-center">
+                        <Spinner animation="border" role="status" variant="primary">
+                            <span className="visually-hidden">Loading featured dishes...</span>
+                        </Spinner>
+                        <p className="mt-2">Loading our signature dishes...</p>
+                    </div>
+                )}
+                
+                {error && (
+                    <Alert variant="warning" className="text-center">
+                        {error}
+                    </Alert>
+                )}
+                
+                {!loading && !error && featuredFoodItems.length === 0 && (
+                    <Alert variant="info" className="text-center">
+                        No featured dishes available at the moment. Please check back later!
+                    </Alert>
+                )}
+                
+                {!loading && featuredFoodItems.length > 0 && (
+                    <Row xs={1} md={2} lg={3} className="g-4">
+                        {featuredFoodItems.map((item, index) => (
+                            <Col key={item.foodName || index} xs={6} sm={6} md={4} lg={4}>
+                                <Card className="h-100 shadow-sm">
+                                    <Card.Img 
+                                        variant="top" 
+                                        src={getImageUrl(item.image)} 
+                                        alt={item.foodName}
+                                        style={{ objectFit: 'cover' }}
+                                        onError={(e) => {
+                                            e.target.src = 'https://via.placeholder.com/300x200?text=No+Image+Available';
+                                        }}
+                                    />
+                                    <Card.Body className="text-center d-flex flex-column">
+                                        <Card.Title className="fw-bold">{item.foodName}</Card.Title>
+                                        <Card.Text className="flex-grow-1 small">{item.description}</Card.Text>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
+                )}
+                
                 <div className="text-center mt-5">
                     <Button as={Link} to={routes.MENU} variant="outline-primary" size="lg">View Full Menu</Button>
                 </div>

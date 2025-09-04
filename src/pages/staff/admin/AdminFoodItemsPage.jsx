@@ -446,18 +446,21 @@ const AdminFoodItemsPage = () => {
                         src={getImageUrl(value)}
                         alt="Food item"
                         rounded
-                        style={{ width: '48px', height: '48px', objectFit: 'cover',
+                        // - hovered item should come up to front from other images
+                        style={{ width: '48px', height: '48px', objectFit: 'cover', overflow: 'visible',
                             transition: 'transform 0.2s ease-in-out', cursor: 'pointer' }}
                         className="hover-zoom"
                         onError={(e) => onImageError(e)}
                         onMouseEnter={(e) => {
                             e.target.style.transform = 'scale(3)';
                             e.target.style.transformOrigin = 'left center';
+                            e.target.style.position = 'relative';
                             e.target.style.zIndex = '1000';
                         }}
                         onMouseLeave={(e) => {
                             e.target.style.transform = 'scale(1)';
                             e.target.style.transformOrigin = 'left center';
+                            e.target.style.position = 'relative';
                             e.target.style.zIndex = 'auto';
                         }}
                     />
